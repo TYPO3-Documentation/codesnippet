@@ -52,6 +52,13 @@ class ClassDocsHelper
         }
     }
 
+    public static function extractPhpDomain(
+        array $config
+    ) : string
+    {
+        return static::extractDocsFromClass($config['class']);
+    }
+
 
     /**
      * Extract constants, properties and methods from class, e.g.
