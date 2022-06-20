@@ -12,6 +12,7 @@ namespace T3docs\RestructuredApiTools\Util;
  * The TYPO3 project - inspiring people to share!
  */
 
+use Symfony\Component\Filesystem\Exception\FileNotFoundException;
 use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Utility\ArrayUtility;
 
@@ -30,7 +31,7 @@ class Typo3CodeSnippets
             'lineStartNumber' => 0,
             'emphasizeLines' => [],
         ];
-        $params = array_replace_recursive($config, $params);
+        $params = array_replace($params,  $config);
         return $this->createCodeSnippet(
             $params['sourceFile'],
             $params['targetFileName'],
@@ -69,13 +70,13 @@ class Typo3CodeSnippets
         array $emphasizeLines = []
     ): string {
         $language = $language !== '' ? $language : $this->getCodeLanguageByFileExtension($sourceFile);
-        $relativeTargetPath = $this->getRelativeTargetPath($targetFileName);
-        $absoluteTargetPath = $this->getAbsoluteDocumentationPath($relativeTargetPath);
-        $relativeSourcePath = $this->getRelativeSourcePath($sourceFile);
-        $absoluteSourcePath = $this->getAbsoluteTypo3Path($relativeSourcePath);
+        $relativeTargetPath = FileHelper::getRelativeTargetPath($targetFileName);
+        $absoluteTargetPath = FileHelper::getAbsoluteDocumentationPath($relativeTargetPath);
+        $relativeSourcePath = FileHelper::getRelativeSourcePath($sourceFile);
+        $absoluteSourcePath = FileHelper::getAbsoluteTypo3Path($relativeSourcePath);
 
         $code = $this->read($absoluteSourcePath);
-        $this->writeCodeBlock(
+        return $this->writeCodeBlock(
             $absoluteTargetPath,
             $relativeSourcePath,
             $code,
@@ -86,7 +87,6 @@ class Typo3CodeSnippets
             $lineStartNumber,
             $emphasizeLines
         );
-        return '';
     }
 
     /**
@@ -118,10 +118,10 @@ class Typo3CodeSnippets
         int $lineStartNumber = 0,
         array $emphasizeLines = []
     ): void {
-        $relativeTargetPath = $this->getRelativeTargetPath($targetFileName);
-        $absoluteTargetPath = $this->getAbsoluteDocumentationPath($relativeTargetPath);
-        $relativeSourcePath = $this->getRelativeSourcePath($sourceFile);
-        $absoluteSourcePath = $this->getAbsoluteTypo3Path($relativeSourcePath);
+        $relativeTargetPath = FileHelper::getRelativeTargetPath($targetFileName);
+        $absoluteTargetPath = FileHelper::getAbsoluteDocumentationPath($relativeTargetPath);
+        $relativeSourcePath = FileHelper::getRelativeSourcePath($sourceFile);
+        $absoluteSourcePath = FileHelper::getAbsoluteTypo3Path($relativeSourcePath);
 
         $code = $this->readJson($absoluteSourcePath, $fields, $inlineLevel);
         $this->writeCodeBlock(
@@ -164,10 +164,10 @@ class Typo3CodeSnippets
         int $lineStartNumber = 0,
         array $emphasizeLines = []
     ): void {
-        $relativeTargetPath = $this->getRelativeTargetPath($targetFileName);
-        $absoluteTargetPath = $this->getAbsoluteDocumentationPath($relativeTargetPath);
-        $relativeSourcePath = $this->getRelativeSourcePath($sourceFile);
-        $absoluteSourcePath = $this->getAbsoluteTypo3Path($relativeSourcePath);
+        $relativeTargetPath = FileHelper::getRelativeTargetPath($targetFileName);
+        $absoluteTargetPath = FileHelper::getAbsoluteDocumentationPath($relativeTargetPath);
+        $relativeSourcePath = FileHelper::getRelativeSourcePath($sourceFile);
+        $absoluteSourcePath = FileHelper::getAbsoluteTypo3Path($relativeSourcePath);
 
         $code = $this->readPhpArray($absoluteSourcePath, $fields);
         $this->writeCodeBlock(
@@ -211,8 +211,8 @@ class Typo3CodeSnippets
         int $lineStartNumber = 0,
         array $emphasizeLines = []
     ): void {
-        $relativeTargetPath = $this->getRelativeTargetPath($targetFileName);
-        $absoluteTargetPath = $this->getAbsoluteDocumentationPath($relativeTargetPath);
+        $relativeTargetPath = FileHelper::getRelativeTargetPath($targetFileName);
+        $absoluteTargetPath = FileHelper::getAbsoluteDocumentationPath($relativeTargetPath);
 
         $code = $this->readPhpClass($class, $members, $withComment);
         $this->writeCodeBlock(
@@ -254,8 +254,8 @@ class Typo3CodeSnippets
         bool $allowDeprecated = false,
         bool $includeConstructor = false
     ): void {
-        $relativeTargetPath = $this->getRelativeTargetPath($targetFileName);
-        $absoluteTargetPath = $this->getAbsoluteDocumentationPath($relativeTargetPath);
+        $relativeTargetPath = FileHelper::getRelativeTargetPath($targetFileName);
+        $absoluteTargetPath = FileHelper::getAbsoluteDocumentationPath($relativeTargetPath);
 
         $code = $this->transformPhpToDocs($class, $members, $withCode, $allowedModifiers, $allowInternal, $allowDeprecated, $includeConstructor);
         $this->writeRst(
@@ -292,10 +292,10 @@ class Typo3CodeSnippets
         int $lineStartNumber = 0,
         array $emphasizeLines = []
     ): void {
-        $relativeTargetPath = $this->getRelativeTargetPath($targetFileName);
-        $absoluteTargetPath = $this->getAbsoluteDocumentationPath($relativeTargetPath);
-        $relativeSourcePath = $this->getRelativeSourcePath($sourceFile);
-        $absoluteSourcePath = $this->getAbsoluteTypo3Path($relativeSourcePath);
+        $relativeTargetPath = FileHelper::getRelativeTargetPath($targetFileName);
+        $absoluteTargetPath = FileHelper::getAbsoluteDocumentationPath($relativeTargetPath);
+        $relativeSourcePath = FileHelper::getRelativeSourcePath($sourceFile);
+        $absoluteSourcePath = FileHelper::getAbsoluteTypo3Path($relativeSourcePath);
 
         $code = $this->readXml($absoluteSourcePath, $nodes);
         $this->writeCodeBlock(
@@ -340,10 +340,10 @@ class Typo3CodeSnippets
         int $lineStartNumber = 0,
         array $emphasizeLines = []
     ): void {
-        $relativeTargetPath = $this->getRelativeTargetPath($targetFileName);
-        $absoluteTargetPath = $this->getAbsoluteDocumentationPath($relativeTargetPath);
-        $relativeSourcePath = $this->getRelativeSourcePath($sourceFile);
-        $absoluteSourcePath = $this->getAbsoluteTypo3Path($relativeSourcePath);
+        $relativeTargetPath = FileHelper::getRelativeTargetPath($targetFileName);
+        $absoluteTargetPath = FileHelper::getAbsoluteDocumentationPath($relativeTargetPath);
+        $relativeSourcePath = FileHelper::getRelativeSourcePath($sourceFile);
+        $absoluteSourcePath = FileHelper::getAbsoluteTypo3Path($relativeSourcePath);
 
         $code = $this->readYaml($absoluteSourcePath, $fields, $inlineLevel);
         $this->writeCodeBlock(
@@ -405,6 +405,9 @@ class Typo3CodeSnippets
     protected function read(string $path): string
     {
         $code = file_get_contents($path);
+        if (!$code) {
+            throw new FileNotFoundException('File not found: ' . $path);
+        }
         return $code;
     }
 
@@ -491,7 +494,7 @@ NOWDOC;
         bool $showLineNumbers,
         int $lineStartNumber,
         array $emphasizeLines
-    ): void {
+    ): string {
         $options = [];
         if ($caption !== '') {
             $options[] = sprintf(':caption: %s', $caption);
@@ -516,11 +519,6 @@ NOWDOC;
         $code = StringHelper::indentMultilineText($code, '   ');
 
         $rst = <<<'NOWDOC'
-.. =========================================================
-.. Automatically generated by the TYPO3 Screenshots project.
-.. https://github.com/TYPO3-Documentation/t3docs-screenshots
-.. =========================================================
-..
 .. Extracted from %s
 
 .. code-block:: %s
@@ -530,7 +528,6 @@ NOWDOC;
 
         $rst = sprintf($rst, $sourceHint, $language, $options, $code);
 
-        @mkdir(dirname($targetPath), 0777, true);
-        file_put_contents($targetPath, $rst);
+        return $rst;
     }
 }

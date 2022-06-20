@@ -3,6 +3,8 @@
 declare(strict_types=1);
 namespace T3docs\RestructuredApiTools\Util;
 
+use TYPO3\CMS\Core\Core\Environment;
+
 /*
  * This file is part of the TYPO3 project.
  *
@@ -14,6 +16,30 @@ namespace T3docs\RestructuredApiTools\Util;
 
 class FileHelper
 {
+
+
+    public static function getRelativeTargetPath(string $filePath): string
+    {
+        return FileHelper::getPathBySegments( $filePath . '.rst.txt');
+    }
+
+    public static function getRelativeSourcePath(string $filePath): string
+    {
+        return FileHelper::getPathBySegments( $filePath);
+    }
+
+    public static function getAbsoluteTypo3Path(string $relativePath): string
+    {
+        return FileHelper::getPathBySegments(Environment::getPublicPath(), $relativePath);
+    }
+
+    public static function getAbsoluteDocumentationPath(string $relativePath): string
+    {
+        return FileHelper::getPathBySegments(
+            $relativePath
+        );
+    }
+
     public static function getFoldersRecursively(string $path, int $maxDepth = 999, array &$folders = []): array
     {
         if ($maxDepth > 0) {
