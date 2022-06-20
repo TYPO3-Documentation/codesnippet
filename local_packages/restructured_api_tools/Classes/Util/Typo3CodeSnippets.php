@@ -21,7 +21,7 @@ use TYPO3\CMS\Core\Utility\ArrayUtility;
 class Typo3CodeSnippets
 {
 
-    public function createCodeSnippetFromConfig(array $config): void {
+    public function createCodeSnippetFromConfig(array $config): string {
         $params = [
             'language' => '',
             'caption' => '',
@@ -31,7 +31,7 @@ class Typo3CodeSnippets
             'emphasizeLines' => [],
         ];
         $params = array_replace_recursive($config, $params);
-        $this->createCodeSnippet(
+        return $this->createCodeSnippet(
             $params['sourceFile'],
             $params['targetFileName'],
             $params['language'],
@@ -67,7 +67,7 @@ class Typo3CodeSnippets
         bool $showLineNumbers = false,
         int $lineStartNumber = 0,
         array $emphasizeLines = []
-    ): void {
+    ): string {
         $language = $language !== '' ? $language : $this->getCodeLanguageByFileExtension($sourceFile);
         $relativeTargetPath = $this->getRelativeTargetPath($targetFileName);
         $absoluteTargetPath = $this->getAbsoluteDocumentationPath($relativeTargetPath);
@@ -86,6 +86,7 @@ class Typo3CodeSnippets
             $lineStartNumber,
             $emphasizeLines
         );
+        return '';
     }
 
     /**
