@@ -17,14 +17,14 @@
 		}
 	},
 	"require": {
-		"typo3/cms-core": "^12.0.0|dev-main"
+		"typo3/cms-core": "^11.5 || 11.5.x-dev"
 	},
 	"extra": {
 		"typo3/cms": {
 			"extension-key": "restructured_api_tools"
 		},
 		"branch-alias": {
-			"dev-master": "11.0.x-dev"
+			"dev-master": "11.5.x-dev"
 		}
 	},
 	"scripts": {
