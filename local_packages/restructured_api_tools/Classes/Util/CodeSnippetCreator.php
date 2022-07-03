@@ -32,6 +32,9 @@ class CodeSnippetCreator
                         case 'createCodeSnippet':
                             $content .= $typo3CodeSnippets->createCodeSnippetFromConfig($entry);
                             break;
+                        case 'createPhpArrayCodeSnippet':
+                            $content .= $typo3CodeSnippets->createPhpArrayCodeSnippetFromConfig($entry);
+                            break;
                         default:
                             throw new \ErrorException('Unkown action: ' . $entry['action']);
                     }

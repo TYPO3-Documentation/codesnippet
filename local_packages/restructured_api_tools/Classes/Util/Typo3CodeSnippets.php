@@ -21,6 +21,26 @@ use TYPO3\CMS\Core\Utility\ArrayUtility;
  */
 class Typo3CodeSnippets
 {
+    public function createPhpArrayCodeSnippetFromConfig(array $config): string
+    {
+        $params = [
+            'caption' => '',
+            'name' => '',
+            'showLineNumbers' => false,
+            'lineStartNumber' => 0,
+            'emphasizeLines' => [],
+        ];
+        $params = array_replace($params,  $config);
+        return $this->createPhpArrayCodeSnippet(
+            $params['sourceFile'],
+            $params['targetFileName'],
+            $params['fields'] ?? [],
+            $params['caption'] != '' ? $params['caption'] : str_replace(['typo3/sysext/', 'typo3conf/ext/'], ['EXT:', 'EXT:'], $params['sourceFile']),
+            $params['name'],
+            $params['showLineNumbers'],
+            $params['lineStartNumber'],
+            $params['emphasizeLines']);
+    }
 
     public function createCodeSnippetFromConfig(array $config): string {
         $params = [
@@ -163,14 +183,14 @@ class Typo3CodeSnippets
         bool $showLineNumbers = false,
         int $lineStartNumber = 0,
         array $emphasizeLines = []
-    ): void {
+    ): string {
         $relativeTargetPath = FileHelper::getRelativeTargetPath($targetFileName);
         $absoluteTargetPath = FileHelper::getAbsoluteDocumentationPath($relativeTargetPath);
         $relativeSourcePath = FileHelper::getRelativeSourcePath($sourceFile);
         $absoluteSourcePath = FileHelper::getAbsoluteTypo3Path($relativeSourcePath);
 
         $code = $this->readPhpArray($absoluteSourcePath, $fields);
-        $this->writeCodeBlock(
+        return $this->writeCodeBlock(
             $absoluteTargetPath,
             $relativeSourcePath,
             $code,
