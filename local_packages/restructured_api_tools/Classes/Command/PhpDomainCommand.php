@@ -42,6 +42,10 @@ class PhpDomainCommand extends Command
             $configPath = $input->getArgument('config');
             $return = realpath($configPath);
             $config = include($configPath . '/codesnippets.php');
+            if (!is_array($config)) {
+                echo "\n" . 'File ' . $configPath . '/codesnippets.php contains no valid Configuration array. ' . "\n\n";
+                return Command::FAILURE;
+            }
             $codeSnippedCreator = new CodeSnippetCreator();
             $codeSnippedCreator->run($config, realpath($configPath));
         } else {
