@@ -13,6 +13,8 @@ namespace T3docs\RestructuredApiTools\Util;
  */
 
 use phpDocumentor\Reflection\DocBlockFactory;
+use HaydenPierce\ClassFinder\ClassFinder;
+use T3docs\RestructuredApiTools\Exceptions\InvalidConfigurationException;
 
 class ClassDocsHelper
 {
@@ -57,6 +59,42 @@ class ClassDocsHelper
     ) : string
     {
         return static::extractDocsFromClass($config['class']);
+    }
+
+    public static function extractPhpDomainAll(
+        array $config
+    ) : string
+    {
+        if (!$config['namespace']) {
+            throw new InvalidConfigurationException('parameter namespace is required');
+        }
+        $classes = ClassFinder::getClassesInNamespace($config['namespace'], intval($config['mode']) ?? 1);
+
+        $path = $config['path'] ?? '';
+        if (str_ends_with($path, '/')) {
+            $path = substr($path, 0, strlen($path) - 1);
+        }
+
+        foreach ($classes as $class) {
+            $fqn = explode('\\', $class);
+            if ($config['pathMode'] === \T3docs\RestructuredApiTools\Util\CodeSnippetCreator::RECURSIVE_PATH) {
+                $pathPart = str_replace($config['namespace'], '', $class);
+                $pathPart = str_replace('\\', '/', $pathPart);
+                $pathPart = substr($pathPart, 1);
+                $outputPath =  $path . '/' . $pathPart . '.rst';
+            } else {
+                $outputPath =  $path . '/' . $fqn[sizeof($fqn) - 1] . '.rst';
+            }
+            $extractPhpDomainConfig = [
+                'class' => $class,
+                'targetFileName' => $outputPath,
+                'withCode' => false,
+            ];
+            $content = ClassDocsHelper::extractPhpDomain($extractPhpDomainConfig);
+            CodeSnippetCreator::writeFile($extractPhpDomainConfig, $content);
+        }
+
+        return 'something';
     }
 
 
@@ -186,7 +224,7 @@ class ClassDocsHelper
                 $result['properties'][] = self::getPropertyCode($class, $property->getName(),
                     $withCode, $modifierSum);
             }
-            foreach ($classReflection->getConstants() as $constant) {
+            foreach ($classReflection->getConstants() as $constant => $constantValue) {
                 $result['constants'][] = self::getConstantCode($class, $constant, $withCode, $modifierSum);
             }
         }
@@ -230,6 +268,9 @@ class ClassDocsHelper
     public static function getUseStatements(string $class): string
     {
         $classReflection = self::getClassReflection($class);
+        if (!$classReflection->getFileName()) {
+            return '';
+        }
         $splFileObject = new \SplFileObject($classReflection->getFileName());
 
         $startLineBody = $classReflection->getStartLine();
@@ -289,6 +330,10 @@ class ClassDocsHelper
         $classReflection = self::getClassReflection($class);
 
         $docBlockFactory = self::getDocBlockFactory();
+
+        if (!$classReflection->getFileName()) {
+            return '';
+        }
         $splFileObject = new \SplFileObject($classReflection->getFileName());
 
         $docComment = $classReflection->getDocComment();
@@ -382,6 +427,10 @@ class ClassDocsHelper
             return '';
         }
         $docBlockFactory = self::getDocBlockFactory();
+
+        if (!$methodReflection->getFileName()) {
+            return '';
+        }
         $splFileObject = new \SplFileObject($methodReflection->getFileName());
 
         $startLineBody = $methodReflection->getStartLine();
@@ -402,14 +451,25 @@ class ClassDocsHelper
         foreach ($parameters as $parameter) {
             $paramName = $parameter->getName();
             $type = 'unknown';
-            if ($parameter->getType()) {
+            if ($parameter->getType() instanceof \ReflectionNamedType) {
                 $type = $parameter->getType()->getName();
+            } elseif ($parameter->getType() instanceof \ReflectionUnionType) {
+                $types = $parameter->getType()->getTypes();
+                $typeNameArray = [];
+                foreach ($types as $type) {
+                    $typeNameArray[] = $type->getName();
+                }
+                $type = implode('|', $typeNameArray);
             }
             $optional = $parameter->isOptional();
             if ($optional) {
-                $default = var_export($parameter->getDefaultValue(), true);
-                $parameterInSignature[] = sprintf('%s %s = %s', $type, $paramName, $default);
-                $parameterInRst[] = sprintf(':param %s $%s: the %s, default: %s', $type, $paramName, $paramName, $default);
+                try {
+                    $default = var_export($parameter->getDefaultValue(), true);
+                    $parameterInSignature[] = sprintf('%s %s = %s', $type, $paramName, $default);
+                    $parameterInRst[] = sprintf(':param %s $%s: the %s, default: %s', $type, $paramName, $paramName, $default);
+                } catch (\ReflectionException $e) {
+                    $parameterInSignature[] = sprintf('%s %s', $type, $paramName);
+                }
             } else {
                 $parameterInSignature[] = sprintf('%s %s', $type, $paramName);
                 $parameterInRst[] = sprintf(':param %s $%s: the %s', $type, $paramName, $paramName);
@@ -419,20 +479,44 @@ class ClassDocsHelper
         $comment = '';
         $returnComment = '';
         if ($docComment) {
-            $docBlock = $docBlockFactory->create($docComment);
-            $comment = $docBlock->getSummary();
-            if ($docBlock->getDescription()->render()) {
-                $comment .= "\n\n" . $docBlock->getDescription()->render();
-            }
-            $returnCommentTagArray = $docBlock->getTagsByName('return');
-            $returnComment = '';
-            if (is_array($returnCommentTagArray) && isset($returnCommentTagArray[0])) {
-                $returnCommentExplode = explode(" ",
-                    $returnCommentTagArray[0]->render(), 3);
-                if (sizeof($returnCommentExplode) == 3) {
-                    $returnComment = str_replace("\n", ' ',
-                        $returnCommentExplode[2]);
+            try {
+                $docBlock = $docBlockFactory->create($docComment);
+                $comment = $docBlock->getSummary();
+                if ($docBlock->getDescription()->render()) {
+                    $comment .= "\n\n" . $docBlock->getDescription()->render();
                 }
+                $returnCommentTagArray = $docBlock->getTagsByName('return');
+                $returnComment = '';
+                if (is_array($returnCommentTagArray) && isset($returnCommentTagArray[0])) {
+                    $returnCommentExplode = explode(' ',
+                        $returnCommentTagArray[0]->render(), 3);
+                    if (sizeof($returnCommentExplode) == 3) {
+                        $returnComment = str_replace("\n", ' ',
+                            $returnCommentExplode[2]);
+                    }
+                }
+                $paramArray = $docBlock->getTagsByName('param');
+                if (is_array($paramArray) && sizeof($paramArray) > 0) {
+                    // doccoments parameters precede over information from Method reflection
+
+                    $parameterInSignature = [];
+                    $parameterInRst = [];
+                    foreach ($paramArray as $param) {
+                        $paramCommentExplode = explode(' ',
+                            $param->render(), 4);
+                        if (sizeof($paramCommentExplode) == 4) {
+                            $parameterInSignature[] = sprintf('%s %s',
+                                $paramCommentExplode[1],
+                                $paramCommentExplode[2]);
+                            $parameterInRst[] = sprintf(':param %s %s: %s',
+                                $paramCommentExplode[1],
+                                $paramCommentExplode[2],
+                                $paramCommentExplode[3]);
+                        }
+                    }
+                }
+            } catch (\Exception) {
+                // doccomment cannot be interpreted
             }
         }
         $codeResult = [];
@@ -460,8 +544,19 @@ class ClassDocsHelper
         if ($parameterInRst) {
             $result[] = implode("\n", $parameterInRst) . "\n";
         }
-        if ($returnType && $returnType->getName() != 'void') {
-            $returnPart = sprintf(':returntype: %s', self::escapeClassName($returnType->getName()));
+        if ($returnType instanceof \ReflectionUnionType or $returnType instanceof \ReflectionNamedType && $returnType->getName() != 'void') {
+            $typeNames = '';
+            if ($returnType instanceof \ReflectionNamedType) {
+                $typeNames = $returnType->getName();
+            } else if ($returnType instanceof \ReflectionUnionType) {
+                $types = $returnType->getTypes();
+                $typeNameArray = [];
+                foreach ($types as $type) {
+                    $typeNameArray[] = $type->getName();
+                }
+                $typeNames = implode('|', $typeNameArray);
+            }
+            $returnPart = sprintf(':returntype: %s', self::escapeClassName($typeNames));
             if ($returnComment) {
                 $returnPart .= "\n" . sprintf(':returns: %s', $returnComment);
             }
@@ -524,6 +619,9 @@ class ClassDocsHelper
     {
         $classReflection = self::getClassReflection($class);
         $propertyReflection = $classReflection->getProperty($property);
+        if (!$classReflection->getFileName()) {
+            return '';
+        }
         $splFileObject = new \SplFileObject($classReflection->getFileName());
 
         if (
@@ -594,6 +692,9 @@ class ClassDocsHelper
         $classReflection = self::getClassReflection($class);
         $constantReflection = $classReflection->getConstant($constant);
 
+        if (!$classReflection->getFileName()) {
+            return '';
+        }
         $splFileObject = new \SplFileObject($classReflection->getFileName());
 
         $header = sprintf('.. php:const:: %s', $constant)."\n\n";

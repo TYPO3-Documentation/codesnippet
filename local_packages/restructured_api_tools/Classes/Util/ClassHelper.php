@@ -130,6 +130,9 @@ class ClassHelper
     public static function getUseStatements(string $class): string
     {
         $classReflection = self::getClassReflection($class);
+        if (!$classReflection->getFileName()) {
+            return '';
+        }
         $splFileObject = new \SplFileObject($classReflection->getFileName());
 
         $startLineBody = $classReflection->getStartLine();
@@ -185,6 +188,9 @@ class ClassHelper
     public static function getClassSignature(string $class, bool $withComment = false): string
     {
         $classReflection = self::getClassReflection($class);
+        if (!$classReflection->getFileName()) {
+            return '';
+        }
         $splFileObject = new \SplFileObject($classReflection->getFileName());
 
         $classShortName = $classReflection->getShortName();
@@ -256,6 +262,9 @@ class ClassHelper
     public static function getMethodCode(string $class, string $method, bool $withComment = false): string
     {
         $methodReflection = self::getMethodReflection($class, $method);
+        if (!$methodReflection->getFileName()) {
+            return '';
+        }
         $splFileObject = new \SplFileObject($methodReflection->getFileName());
 
         $startLineBody = $methodReflection->getStartLine();
@@ -314,6 +323,9 @@ class ClassHelper
     {
         $classReflection = self::getClassReflection($class);
         $propertyReflection = $classReflection->getProperty($property);
+        if (!$classReflection->getFileName()) {
+            return '';
+        }
         $splFileObject = new \SplFileObject($classReflection->getFileName());
 
         $result = [];
@@ -355,6 +367,9 @@ class ClassHelper
         $constantReflection = $classReflection->getConstant($constant);
         if ($constantReflection === false) {
             throw new \ReflectionException(sprintf('Constant %s does not exist', $constant));
+        }
+        if (!$classReflection->getFileName()) {
+            return '';
         }
         $splFileObject = new \SplFileObject($classReflection->getFileName());
 
