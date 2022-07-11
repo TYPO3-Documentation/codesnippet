@@ -37,7 +37,6 @@ class PhpDomainCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
         $return = '';
-
         if ($input->getArgument('config')) {
             $configPath = $input->getArgument('config');
             $return = realpath($configPath);
@@ -49,9 +48,8 @@ class PhpDomainCommand extends Command
             $codeSnippedCreator = new CodeSnippetCreator();
             $codeSnippedCreator->run($config, realpath($configPath));
         } else {
-            $return = 'Please enter the fully qualified name of the class or interface you want to document.';
+            echo 'Please enter the fully qualified name of the class or interface you want to document.';
         }
-
         return Command::SUCCESS;
     }
 }
