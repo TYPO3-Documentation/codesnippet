@@ -58,7 +58,7 @@ class ClassDocsHelper
         array $config
     ) : string
     {
-        return static::extractDocsFromClass($config['class']);
+        return static::extractDocsFromClass($config);
     }
 
     public static function extractPhpDomainAll(
@@ -81,17 +81,53 @@ class ClassDocsHelper
                 $pathPart = str_replace($config['namespace'], '', $class);
                 $pathPart = str_replace('\\', '/', $pathPart);
                 $pathPart = substr($pathPart, 1);
-                $outputPath =  $path . '/' . $pathPart . '.rst';
+                $outputPath =  $path . '/' . $pathPart;
             } else {
-                $outputPath =  $path . '/' . $fqn[sizeof($fqn) - 1] . '.rst';
+                $outputPath =  $path . '/' . $fqn[sizeof($fqn) - 1];
+            }
+            $classPartArray = explode('\\', $class);
+            if (sizeof($classPartArray) > 1) {
+                $shortClass = $classPartArray[sizeof($classPartArray) -1];
+                $shortNameSpace = $classPartArray[sizeof($classPartArray) -2];
             }
             $extractPhpDomainConfig = [
                 'class' => $class,
-                'targetFileName' => $outputPath,
+                'targetFileName' => '/CodeSnippets/' . $outputPath . '.rst.txt',
+                'rstFileName' => $outputPath . '.rst',
+                'gitHubLink' => $config['gitHubLink'],
+                'mainNamespace' => $config['mainNamespace'],
                 'withCode' => false,
             ];
+            $rstContent = sprintf(
+'.. include:: /Includes.rst.txt
+
+================================================================================
+%s
+================================================================================
+
+.. include:: /CodeSnippets/%s.rst.txt
+', RstHelper::escapeRst($shortClass), $outputPath);
+            $indexContent = sprintf('
+.. include:: /Includes.rst.txt
+
+================================================================================
+%s
+================================================================================
+
+
+The following list contains all public classes in namespace :php:`%s`.
+
+.. toctree::
+   :titlesonly:
+   :caption: %s
+   :glob:
+
+   *
+   */Index
+',
+                RstHelper::escapeRst($shortNameSpace), $config['namespace'], $config['namespace']);
             $content = ClassDocsHelper::extractPhpDomain($extractPhpDomainConfig);
-            CodeSnippetCreator::writeFile($extractPhpDomainConfig, $content);
+            CodeSnippetCreator::writeFile($extractPhpDomainConfig, $content, $rstContent, $config['overwriteRst'] ?? false, $indexContent, $config['overwriteIndex'] ?? false);
         }
 
         return 'something';
@@ -166,15 +202,25 @@ class ClassDocsHelper
      */
 
     public static function extractDocsFromClass(
-        string $class,
-        array $members = [],
-        bool $withCode = false,
-        array $allowedModifiers = ['public'],
-        bool $allowInternal = false,
-        bool $allowDeprecated = false,
-        bool $includeConstructor = false
+        array $config
     ): string
     {
+
+        $class = $config['class'];
+        $members = $config['members'] ?? [];
+        $withCode = $config['withCode'] ?? false;
+        $allowedModifiers = $config['allowedModifiers'] ?? ['public'];
+        $allowInternal = $config['allowInternal'] ?? false;
+        $allowDeprecated = $config['allowDeprecated'] ?? false;
+        $includeConstructor = $config['includeConstructor'] ?? false;
+        $template = $config['template'] ?? '';
+
+        $gitHubLink = '';
+        if ($config['gitHubLink']) {
+            $link = str_replace([$config['mainNamespace'], '\\'], ['', '/'], $class);
+            $gitHubLink = $config['gitHubLink'] . $link . '.php';
+        }
+
         $classReflection = self::getClassReflection($class);
         $modifierSum = 0;
 
@@ -200,7 +246,7 @@ class ClassDocsHelper
             foreach ($members as $member) {
                 if ($classReflection->hasMethod($member)) {
                     $result['methods'][] = self::getMethodCode($class, $member,
-                        $withCode, $modifierSum, $allowInternal, $allowDeprecated);
+                        $withCode, $modifierSum, $allowInternal, $allowDeprecated, $gitHubLink);
                 } elseif ($classReflection->hasProperty($member)) {
                     $result['properties'][] = self::getPropertyCode($class,
                         $member, $withCode, $modifierSum);
@@ -218,7 +264,7 @@ class ClassDocsHelper
             foreach ($classReflection->getMethods() as $method) {
                 $result['methods'][] = self::getMethodCode($class, $method->getShortName(),
                     $withCode, $modifierSum, $allowInternal, $allowDeprecated,
-                    $includeConstructor);
+                    $includeConstructor, $gitHubLink);
             }
             foreach ($classReflection->getProperties() as $property) {
                 $result['properties'][] = self::getPropertyCode($class, $property->getName(),
@@ -235,9 +281,17 @@ class ClassDocsHelper
         $classBody = rtrim($classBody);
         $classBody = StringHelper::indentMultilineText($classBody, '   ') . "\n";
 
-        $classSignature = self::getClassSignature($class, $withCode, $classReflection);
+        $classSignature = self::getClassSignature($class, $withCode, $classReflection, $gitHubLink);
 
-        return $classSignature . $classBody;
+        if (!$template) {
+            $content = $classSignature . $classBody;
+        } else {
+            $content = sprintf(
+                $template,
+                $classReflection->getName(), $classSignature . $classBody);
+        }
+
+        return $content;
     }
 
     protected static function getClassReflection(string $class): \ReflectionClass
@@ -325,7 +379,7 @@ class ClassDocsHelper
      * @param bool $withCode Include code
      * @return string
      */
-    public static function getClassSignature(string $class, bool $withCode, \ReflectionClass $reflectionClass): string
+    public static function getClassSignature(string $class, bool $withCode, \ReflectionClass $reflectionClass, $gitHubLink=''): string
     {
         $classReflection = self::getClassReflection($class);
 
@@ -344,6 +398,10 @@ class ClassDocsHelper
             if ($docBlock->getDescription()->render()) {
                 $comment .= "\n\n" . $docBlock->getDescription()->render();
             }
+        }
+        if ($gitHubLink) {
+            $comment .= "\n\n";
+            $comment .=  sprintf('See source code on `GitHub <%s>`__.', $gitHubLink);
         }
 
         $namespace = $classReflection->getNamespaceName();
@@ -412,7 +470,8 @@ class ClassDocsHelper
     public static function getMethodCode(string $class, string $method,
         bool $withCode,
         int $modifierSum, bool $allowInternal, bool $allowDeprecated,
-        bool $includeConstructor): string
+        bool $includeConstructor,
+        string $gitHubLink = ''): string
     {
         $methodReflection = self::getMethodReflection($class, $method);
         $isInternal = is_string($methodReflection->getDocComment())
@@ -439,7 +498,7 @@ class ClassDocsHelper
         $startLineSignature = max($startLineBody - 20, 0);
         for ($lineNumber=$startLineSignature; $lineNumber <= $startLineBody; $lineNumber++) {
             $splFileObject->seek($lineNumber);
-            if (strpos($splFileObject->current(), sprintf('function %s', $method)) !== false) {
+            if (strpos($splFileObject->current(), sprintf('function %s', RstHelper::escapeRst($method))) !== false) {
                 $startLineSignature = $lineNumber;
             }
         }
@@ -465,14 +524,14 @@ class ClassDocsHelper
             if ($optional) {
                 try {
                     $default = var_export($parameter->getDefaultValue(), true);
-                    $parameterInSignature[] = sprintf('%s %s = %s', $type, $paramName, $default);
-                    $parameterInRst[] = sprintf(':param %s $%s: the %s, default: %s', $type, $paramName, $paramName, $default);
+                    $parameterInSignature[] = sprintf('%s %s = %s', RstHelper::escapeRst($type), $paramName, $default);
+                    $parameterInRst[] = sprintf(':param %s $%s: the %s, default: %s', RstHelper::escapeRst($type), $paramName, $paramName, $default);
                 } catch (\ReflectionException $e) {
-                    $parameterInSignature[] = sprintf('%s %s', $type, $paramName);
+                    $parameterInSignature[] = sprintf('%s %s', RstHelper::escapeRst($type), $paramName);
                 }
             } else {
-                $parameterInSignature[] = sprintf('%s %s', $type, $paramName);
-                $parameterInRst[] = sprintf(':param %s $%s: the %s', $type, $paramName, $paramName);
+                $parameterInSignature[] = sprintf('%s %s', RstHelper::escapeRst($type), $paramName);
+                $parameterInRst[] = sprintf(':param %s $%s: the %s', RstHelper::escapeRst($type), $paramName, $paramName);
             }
         }
         $docComment = $methodReflection->getDocComment();
@@ -531,6 +590,16 @@ class ClassDocsHelper
         $methodHead = sprintf('.. php:method:: %s(%s)', $methodName, implode(', ', $parameterInSignature)) . "\n\n";
 
         $result = [];
+        if ($gitHubLink) {
+            $comment .= "\n\n";
+            if ($startLineSignature) {
+                $comment .= sprintf('See source code on `GitHub <%s>`__.',
+                    $gitHubLink . '#L' . $startLineSignature);
+            } else {
+                $comment .= sprintf('See source code on `GitHub <%s>`__.',
+                    $gitHubLink);
+            }
+        }
         if ($comment) {
             $result[] = $comment;
             $result[] = "\n\n";
@@ -642,7 +711,7 @@ class ClassDocsHelper
             }
         }
 
-        $header = sprintf('.. php:attr:: %s', $property)."\n\n";
+        $header = sprintf('.. php:attr:: %s', RstHelper::escapeRst($property))."\n\n";
         $body = [];
         $code = [];
         if ($comment) {
@@ -650,7 +719,7 @@ class ClassDocsHelper
         }
         while (!$splFileObject->eof()) {
             $line = $splFileObject->fgets();
-            if (preg_match(sprintf('#(private|protected|public)[^$]*\$%s(\s*=\s*[^;]*)?;#', $property), $line) === 1) {
+            if (preg_match(sprintf('#(private|protected|public)[^$]*\$%s(\s*=\s*[^;]*)?;#', RstHelper::escapeRst($property)), $line) === 1) {
                 $code[] = $line;
                 break;
             }
@@ -697,7 +766,7 @@ class ClassDocsHelper
         }
         $splFileObject = new \SplFileObject($classReflection->getFileName());
 
-        $header = sprintf('.. php:const:: %s', $constant)."\n\n";
+        $header = sprintf('.. php:const:: %s', RstHelper::escapeRst($constant))."\n\n";
         $body = [];
         $body[] = sprintf(':php:`%s`, type %s',var_export($constantReflection, true), gettype($constantReflection)) . "\n\n";
             $code = [];
