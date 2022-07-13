@@ -14,6 +14,7 @@ namespace T3docs\RestructuredApiTools\Util;
 
 use phpDocumentor\Reflection\DocBlockFactory;
 use HaydenPierce\ClassFinder\ClassFinder;
+use T3docs\RestructuredApiTools\Exceptions\ClassNotPublicException;
 use T3docs\RestructuredApiTools\Exceptions\InvalidConfigurationException;
 
 class ClassDocsHelper
@@ -54,16 +55,9 @@ class ClassDocsHelper
         }
     }
 
-    public static function extractPhpDomain(
+    public static function extractPhpDomainAll (
         array $config
-    ) : string
-    {
-        return static::extractDocsFromClass($config);
-    }
-
-    public static function extractPhpDomainAll(
-        array $config
-    ) : string
+    )
     {
         if (!$config['namespace']) {
             throw new InvalidConfigurationException('parameter namespace is required');
@@ -74,6 +68,8 @@ class ClassDocsHelper
         if (str_ends_with($path, '/')) {
             $path = substr($path, 0, strlen($path) - 1);
         }
+
+        $namespaceArray = [];
 
         foreach ($classes as $class) {
             $fqn = explode('\\', $class);
@@ -88,7 +84,6 @@ class ClassDocsHelper
             $classPartArray = explode('\\', $class);
             if (sizeof($classPartArray) > 1) {
                 $shortClass = $classPartArray[sizeof($classPartArray) -1];
-                $shortNameSpace = $classPartArray[sizeof($classPartArray) -2];
             }
             $extractPhpDomainConfig = [
                 'class' => $class,
@@ -107,6 +102,61 @@ class ClassDocsHelper
 
 .. include:: /CodeSnippets/%s.rst.txt
 ', RstHelper::escapeRst($shortClass), $outputPath);
+
+            try {
+                $content = ClassDocsHelper::extractPhpDomain($extractPhpDomainConfig);
+                CodeSnippetCreator::writeFile($extractPhpDomainConfig, $content,
+                    $rstContent, $config['overwriteRst'] ?? false);
+                // only add Index.rst to directory if there was a rstfile written
+                $rstDir = str_replace($config['namespace'], '', $class);
+                $rstDirArray = explode('\\', $rstDir);
+                if (sizeof($rstDirArray) > 0) {
+                    unset($rstDirArray[sizeof($rstDirArray) - 1]);
+                }
+                $collectedClassPart = '';
+                $lastKey = end(array_keys($rstDirArray));
+                foreach ($rstDirArray as $key => $rstDirPart) {
+
+                    $collectedClassPart .= ($collectedClassPart == '') ? '' : '\\';
+                    $collectedClassPart .= $rstDirPart;
+                    if ($key == $lastKey) {
+                        if (!isset($namespaceArray[$collectedClassPart])) {
+                            $namespaceArray[$collectedClassPart] = [
+                                'short' => $rstDirPart,
+                                'hasSubDirs' => false,
+                                'hasChildren' => true,
+                            ];
+                        } else {
+                            $namespaceArray[$collectedClassPart]['hasChildren'] = true;
+                        }
+                    } else {
+                        if (!isset($namespaceArray[$collectedClassPart])) {
+                            $namespaceArray[$collectedClassPart] = [
+                                'short' => $rstDirPart,
+                                'hasSubDirs' => true,
+                                'hasChildren' => false,
+                            ];
+                        } else {
+                            $namespaceArray[$collectedClassPart]['hasSubDirs'] = true;
+                        }
+                    }
+                }
+            } catch (ClassNotPublicException $e) {
+                // ignore internal classes
+            }
+        }
+
+        foreach ($namespaceArray as $addedNameSpace => $addedNameSpaceConfig) {
+            if (!$addedNameSpaceConfig['short']) {
+                $addedNameSpaceConfig['short'] = $config['namespace'];
+            }
+            $tree = '';
+            if ($addedNameSpaceConfig['hasSubDirs']) {
+                $tree .= '   */Index' . LF;
+            }
+            if ($addedNameSpaceConfig['hasChildren']) {
+                $tree .= '   *' . LF;
+            }
             $indexContent = sprintf('
 .. include:: /Includes.rst.txt
 
@@ -119,18 +169,17 @@ The following list contains all public classes in namespace :php:`%s`.
 
 .. toctree::
    :titlesonly:
+   :maxdepth: 1
    :caption: %s
    :glob:
 
-   *
-   */Index
+%s
 ',
-                RstHelper::escapeRst($shortNameSpace), $config['namespace'], $config['namespace']);
-            $content = ClassDocsHelper::extractPhpDomain($extractPhpDomainConfig);
-            CodeSnippetCreator::writeFile($extractPhpDomainConfig, $content, $rstContent, $config['overwriteRst'] ?? false, $indexContent, $config['overwriteIndex'] ?? false);
+            RstHelper::escapeRst($addedNameSpaceConfig['short']), $config['namespace'] . '\\'.$addedNameSpace, $config['namespace'] . '\\'.$addedNameSpace, $tree);
+            $indexPart = str_replace($config['namespace'], '', $addedNameSpace);
+            $indexPart = $config['path'] . str_replace('\\', '/', $indexPart);
+            CodeSnippetCreator::writeSimpleFile($indexContent, $indexPart . '/Index.rst');
         }
-
-        return 'something';
     }
 
 
@@ -199,9 +248,10 @@ The following list contains all public classes in namespace :php:`%s`.
      * @param bool $allowInternal Include Internal methods?
      * @param bool $allowDeprecated Include Deprecated methods?
      * @return string
+     * @throws ClassNotPublicException
      */
 
-    public static function extractDocsFromClass(
+    public static function extractPhpDomain (
         array $config
     ): string
     {
@@ -222,6 +272,11 @@ The following list contains all public classes in namespace :php:`%s`.
         }
 
         $classReflection = self::getClassReflection($class);
+        $isInternal = is_string($classReflection->getDocComment())
+            && str_contains($classReflection->getDocComment(), '@internal');
+        if ($isInternal && !$config['includeInternal']){
+            throw new ClassNotPublicException('Class ' . $class . ' is marked as internal.');
+        }
         $modifierSum = 0;
 
         foreach ($allowedModifiers as $modifier) {
@@ -246,7 +301,7 @@ The following list contains all public classes in namespace :php:`%s`.
             foreach ($members as $member) {
                 if ($classReflection->hasMethod($member)) {
                     $result['methods'][] = self::getMethodCode($class, $member,
-                        $withCode, $modifierSum, $allowInternal, $allowDeprecated, $gitHubLink);
+                        $withCode, $modifierSum, $allowInternal, $allowDeprecated, $includeConstructor, $gitHubLink);
                 } elseif ($classReflection->hasProperty($member)) {
                     $result['properties'][] = self::getPropertyCode($class,
                         $member, $withCode, $modifierSum);
@@ -382,7 +437,6 @@ The following list contains all public classes in namespace :php:`%s`.
     public static function getClassSignature(string $class, bool $withCode, \ReflectionClass $reflectionClass, $gitHubLink=''): string
     {
         $classReflection = self::getClassReflection($class);
-
         $docBlockFactory = self::getDocBlockFactory();
 
         if (!$classReflection->getFileName()) {

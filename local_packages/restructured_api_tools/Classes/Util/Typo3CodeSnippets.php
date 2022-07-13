@@ -453,6 +453,10 @@ class Typo3CodeSnippets
         return $code;
     }
 
+    /**
+     * @throws \T3docs\RestructuredApiTools\Exceptions\ClassNotPublicException
+     * @throws \ReflectionException
+     */
     protected function transformPhpToDocs(string $class, array $members, bool $withCode,
         array $allowedModifiers, bool $allowInternal, bool $allowDeprecated,
         bool $includeConstructor
