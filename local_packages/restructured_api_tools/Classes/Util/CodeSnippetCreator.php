@@ -37,12 +37,15 @@ class CodeSnippetCreator
                     case 'createPhpClassDocs':
                         $content = ClassDocsHelper::extractPhpDomain($entry);
                         $this->writeFile($entry,  $content);
+                        break;
                     case 'createCodeSnippet':
                         $content = $typo3CodeSnippets->createCodeSnippetFromConfig($entry);
                         $this->writeFile($entry,  $content);
+                        break;
                     case 'createPhpArrayCodeSnippet':
                         $content = $typo3CodeSnippets->createPhpArrayCodeSnippetFromConfig($entry);
                         $this->writeFile($entry,  $content);
+                        break;
                     default:
                         throw new InvalidConfigurationException('Unkown action: ' . $entry['action']);
                 }
@@ -61,7 +64,9 @@ class CodeSnippetCreator
             throw new InvalidConfigurationException('No content found for file  ' . $entry['targetFileName']);
         }
         $filename = self::$configPath . '/' . $entry['targetFileName'];
-        mkdir(dirname($filename), 0755, true);
+        if (!file_exists(dirname($filename))) {
+            mkdir(dirname($filename), 0755, true);
+        }
         \TYPO3\CMS\Core\Utility\GeneralUtility::writeFile($filename,
             $content);
         self::$fileCount++;
