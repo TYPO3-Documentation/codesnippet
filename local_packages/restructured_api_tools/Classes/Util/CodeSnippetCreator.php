@@ -47,7 +47,7 @@ class CodeSnippetCreator
                         $this->writeFile($entry,  $content);
                         break;
                     default:
-                        throw new InvalidConfigurationException('Unkown action: ' . $entry['action']);
+                        throw new InvalidConfigurationException('Unknown action: ' . $entry['action']);
                 }
             }
 

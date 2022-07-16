@@ -36,20 +36,21 @@ class PhpDomainCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $io = new SymfonyStyle($input, $output);
-        $return = '';
-        if ($input->getArgument('config')) {
-            $configPath = $input->getArgument('config');
-            $return = realpath($configPath);
-            $config = include($configPath . '/codesnippets.php');
-            if (!is_array($config)) {
-                echo "\n" . 'File ' . $configPath . '/codesnippets.php contains no valid Configuration array. ' . "\n\n";
-                return Command::FAILURE;
-            }
-            $codeSnippedCreator = new CodeSnippetCreator();
-            $codeSnippedCreator->run($config, realpath($configPath));
-        } else {
-            echo 'Please enter the fully qualified name of the class or interface you want to document.';
+
+        if ($input->getArgument('config') === null) {
+            $io->error('Please enter the fully qualified name of the class or interface you want to document.');
+            return Command::FAILURE;
         }
+
+        $configPath = $input->getArgument('config');
+        $config = include($configPath . '/codesnippets.php');
+        if (!is_array($config)) {
+            $io->error('File ' . $configPath . '/codesnippets.php contains no valid Configuration array.');
+            return Command::FAILURE;
+        }
+        $codeSnippedCreator = new CodeSnippetCreator();
+        $codeSnippedCreator->run($config, realpath($configPath));
+
         return Command::SUCCESS;
     }
 }
