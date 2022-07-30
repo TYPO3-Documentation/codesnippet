@@ -42,6 +42,10 @@ class CodeSnippetCreator
                         $content = $typo3CodeSnippets->createCodeSnippetFromConfig($entry);
                         $this->writeFile($entry,  $content);
                         break;
+                    case 'createPhpClassCodeSnippet':
+                        $content = $typo3CodeSnippets->createPhpClassCodeSnippet($entry);
+                        $this->writeFile($entry,  $content);
+                        break;
                     case 'createPhpArrayCodeSnippet':
                         $content = $typo3CodeSnippets->createPhpArrayCodeSnippetFromConfig($entry);
                         $this->writeFile($entry,  $content);

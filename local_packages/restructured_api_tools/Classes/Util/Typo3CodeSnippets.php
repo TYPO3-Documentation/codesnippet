@@ -90,23 +90,22 @@ class Typo3CodeSnippets
         array $emphasizeLines = []
     ): string {
         $language = $language !== '' ? $language : $this->getCodeLanguageByFileExtension($sourceFile);
-        $relativeTargetPath = FileHelper::getRelativeTargetPath($targetFileName);
-        $absoluteTargetPath = FileHelper::getAbsoluteDocumentationPath($relativeTargetPath);
         $relativeSourcePath = FileHelper::getRelativeSourcePath($sourceFile);
         $absoluteSourcePath = FileHelper::getAbsoluteTypo3Path($relativeSourcePath);
-
         $code = $this->read($absoluteSourcePath);
-        return $this->writeCodeBlock(
-            $absoluteTargetPath,
-            $relativeSourcePath,
-            $code,
-            $language,
-            $caption,
-            $name,
-            $showLineNumbers,
-            $lineStartNumber,
-            $emphasizeLines
-        );
+
+        $config = [
+            'sourceHint' => $relativeSourcePath,
+            'code' => $code,
+            'language' => $language,
+            'caption' => $caption,
+            'name' => $name,
+            'showLineNumbers' => $showLineNumbers,
+            'lineStartNumber' => $lineStartNumber,
+            'emphasizeLines' => $emphasizeLines,
+        ];
+
+        return $this->getCodeBlockRst($config);
     }
 
     /**
@@ -137,24 +136,24 @@ class Typo3CodeSnippets
         bool $showLineNumbers = false,
         int $lineStartNumber = 0,
         array $emphasizeLines = []
-    ): void {
-        $relativeTargetPath = FileHelper::getRelativeTargetPath($targetFileName);
-        $absoluteTargetPath = FileHelper::getAbsoluteDocumentationPath($relativeTargetPath);
+    ): string {
         $relativeSourcePath = FileHelper::getRelativeSourcePath($sourceFile);
         $absoluteSourcePath = FileHelper::getAbsoluteTypo3Path($relativeSourcePath);
 
         $code = $this->readJson($absoluteSourcePath, $fields, $inlineLevel);
-        $this->writeCodeBlock(
-            $absoluteTargetPath,
-            $relativeSourcePath,
-            $code,
-            'json',
-            $caption,
-            $name,
-            $showLineNumbers,
-            $lineStartNumber,
-            $emphasizeLines
-        );
+
+        $config = [
+            'sourceHint' => $relativeSourcePath,
+            'code' => $code,
+            'language' => 'json',
+            'caption' => $caption,
+            'name' => $name,
+            'showLineNumbers' => $showLineNumbers,
+            'lineStartNumber' => $lineStartNumber,
+            'emphasizeLines' => $emphasizeLines,
+        ];
+
+        return $this->getCodeBlockRst($config);
     }
 
     /**
@@ -190,62 +189,41 @@ class Typo3CodeSnippets
         $absoluteSourcePath = FileHelper::getAbsoluteTypo3Path($relativeSourcePath);
 
         $code = $this->readPhpArray($absoluteSourcePath, $fields);
-        return $this->writeCodeBlock(
-            $absoluteTargetPath,
-            $relativeSourcePath,
-            $code,
-            'php',
-            $caption,
-            $name,
-            $showLineNumbers,
-            $lineStartNumber,
-            $emphasizeLines
-        );
+
+        $config = [
+            'sourceHint' => $relativeSourcePath,
+            'code' => $code,
+            'language' => 'php',
+            'caption' => $caption,
+            'name' => $name,
+            'showLineNumbers' => $showLineNumbers,
+            'lineStartNumber' => $lineStartNumber,
+            'emphasizeLines' => $emphasizeLines,
+        ];
+        return $this->getCodeBlockRst($config);
     }
 
     /**
      * Reads a TYPO3 PHP class file and generates a reST file from it for inclusion.
      *
-     * @param string $class Name of PHP class,
-     *                      e.g. "TYPO3\CMS\Core\Cache\Backend\FileBackend"
-     * @param string $targetFileName File path without file extension of reST file relative to code snippets target folder,
-     *                              e.g. "FileBackendFreeze"
-     * @param array $members Extract these members (constants, properties and methods) from the PHP class,
-     *                              e.g. ["frozen", "freeze"]
-     * @param bool $withComment Include comments?
-     * @param string $caption The code snippet caption text
-     * @param string $name Implicit target name that can be referenced in the reST document,
-     *                      e.g. "my-code-snippet"
-     * @param bool $showLineNumbers Enable to generate line numbers for the code block
-     * @param int $lineStartNumber The first line number of the code block
-     * @param int[] $emphasizeLines Emphasize particular lines of the code block
+     * $config['class']: Name of PHP class,
+     * e.g. "TYPO3\CMS\Core\Cache\Backend\FileBackend"
+     * $config['members': Extract these members (constants, properties
+     * and methods) from the PHP class, e.g. ["frozen", "freeze"]
+     * $config['withComment'] Include comments?
      */
     public function createPhpClassCodeSnippet(
-        string $class,
-        string $targetFileName,
-        array $members,
-        bool $withComment = false,
-        string $caption = '',
-        string $name = '',
-        bool $showLineNumbers = false,
-        int $lineStartNumber = 0,
-        array $emphasizeLines = []
-    ): void {
-        $relativeTargetPath = FileHelper::getRelativeTargetPath($targetFileName);
-        $absoluteTargetPath = FileHelper::getAbsoluteDocumentationPath($relativeTargetPath);
+        array $config
+    ): string {
+        $config['code'] = $this->readPhpClass($config);
 
-        $code = $this->readPhpClass($class, $members, $withComment);
-        $this->writeCodeBlock(
-            $absoluteTargetPath,
-            $class,
-            $code,
-            'php',
-            $caption,
-            $name,
-            $showLineNumbers,
-            $lineStartNumber,
-            $emphasizeLines
-        );
+        $classPath = (new \ReflectionClass($config['class']))->getFileName();
+        $classPath = FileHelper::getExtPath($classPath);
+
+        $config['sourceHint'] = $config['sourceHint'] ?? $classPath;
+        $config['caption'] = $config['caption'] ?? $classPath;
+        $config['language'] = 'php';
+        return $this->getCodeBlockRst($config);
     }
 
 
@@ -311,24 +289,24 @@ class Typo3CodeSnippets
         bool $showLineNumbers = false,
         int $lineStartNumber = 0,
         array $emphasizeLines = []
-    ): void {
-        $relativeTargetPath = FileHelper::getRelativeTargetPath($targetFileName);
-        $absoluteTargetPath = FileHelper::getAbsoluteDocumentationPath($relativeTargetPath);
+    ): string {
         $relativeSourcePath = FileHelper::getRelativeSourcePath($sourceFile);
         $absoluteSourcePath = FileHelper::getAbsoluteTypo3Path($relativeSourcePath);
 
         $code = $this->readXml($absoluteSourcePath, $nodes);
-        $this->writeCodeBlock(
-            $absoluteTargetPath,
-            $relativeSourcePath,
-            $code,
-            'xml',
-            $caption,
-            $name,
-            $showLineNumbers,
-            $lineStartNumber,
-            $emphasizeLines
-        );
+
+
+        $config = [
+            'sourceHint' => $relativeSourcePath,
+            'code' => $code,
+            'language' => 'xml',
+            'caption' => $caption,
+            'name' => $name,
+            'showLineNumbers' => $showLineNumbers,
+            'lineStartNumber' => $lineStartNumber,
+            'emphasizeLines' => $emphasizeLines,
+        ];
+        return $this->getCodeBlockRst($config);
     }
 
     /**
@@ -359,24 +337,25 @@ class Typo3CodeSnippets
         bool $showLineNumbers = false,
         int $lineStartNumber = 0,
         array $emphasizeLines = []
-    ): void {
+    ): string {
         $relativeTargetPath = FileHelper::getRelativeTargetPath($targetFileName);
         $absoluteTargetPath = FileHelper::getAbsoluteDocumentationPath($relativeTargetPath);
         $relativeSourcePath = FileHelper::getRelativeSourcePath($sourceFile);
         $absoluteSourcePath = FileHelper::getAbsoluteTypo3Path($relativeSourcePath);
 
         $code = $this->readYaml($absoluteSourcePath, $fields, $inlineLevel);
-        $this->writeCodeBlock(
-            $absoluteTargetPath,
-            $relativeSourcePath,
-            $code,
-            'yaml',
-            $caption,
-            $name,
-            $showLineNumbers,
-            $lineStartNumber,
-            $emphasizeLines
-        );
+
+        $config = [
+            'sourceHint' => $relativeSourcePath,
+            'code' => $code,
+            'language' => 'yaml',
+            'caption' => $caption,
+            'name' => $name,
+            'showLineNumbers' => $showLineNumbers,
+            'lineStartNumber' => $lineStartNumber,
+            'emphasizeLines' => $emphasizeLines,
+        ];
+        return $this->getCodeBlockRst($config);
     }
 
     protected function getCodeLanguageByFileExtension(string $filePath): string
@@ -465,9 +444,9 @@ class Typo3CodeSnippets
         return ClassDocsHelper::extractDocsFromClass($class, $members, $withCode, $allowedModifiers, $allowInternal, $allowDeprecated, $includeConstructor);
     }
 
-    protected function readPhpClass(string $class, array $members, bool $withComment): string
+    protected function readPhpClass(array $config): string
     {
-        return ClassHelper::extractMembersFromClass($class, $members, $withComment);
+        return ClassHelper::extractMembersFromClass($config);
     }
 
     protected function readXml(string $path, array $nodes): string
@@ -508,39 +487,31 @@ NOWDOC;
         file_put_contents($targetPath, $rst);
     }
 
-    protected function writeCodeBlock(
-        string $targetPath,
-        string $sourceHint,
-        string $code,
-        string $language,
-        string $caption,
-        string $name,
-        bool $showLineNumbers,
-        int $lineStartNumber,
-        array $emphasizeLines
+    protected function getCodeBlockRst(
+        array $config
     ): string {
         $options = [];
-        if ($caption !== '') {
-            $options[] = sprintf(':caption: %s', $caption);
+        if (isset($config['caption']) && $config['caption'] !== '') {
+            $options[] = sprintf(':caption: %s', $config['caption']);
         }
-        if ($name !== '') {
-            $options[] = sprintf(':name: %s', $name);
+        if (isset($config['name']) &&  $config['name'] !== '') {
+            $options[] = sprintf(':name: %s', $config['name']);
         }
-        if ($showLineNumbers) {
+        if (isset($config['showLineNumbers']) &&  $config['showLineNumbers']) {
             $options[] = ':linenos:';
         }
-        if ($lineStartNumber > 0) {
-            $options[] = sprintf(':lineno-start: %s', $lineStartNumber);
+        if (isset($config['lineStartNumber']) &&  $config['lineStartNumber'] > 0) {
+            $options[] = sprintf(':lineno-start: %s', $config['lineStartNumber']);
         }
-        if (count($emphasizeLines) > 0) {
-            $options[] = sprintf(':emphasize-lines: %s', implode(',', $emphasizeLines));
+        if (isset($config['emphasizeLines']) && count( $config['emphasizeLines']) > 0) {
+            $options[] = sprintf(':emphasize-lines: %s', implode(',', $config['emphasizeLines']));
         }
-        if (count($options) > 0) {
+        if (count( $options) > 0) {
             $options = StringHelper::indentMultilineText(implode("\n", $options), '   ') . "\n";
         } else {
             $options = "";
         }
-        $code = StringHelper::indentMultilineText($code, '   ');
+        $codeBlockContent = StringHelper::indentMultilineText($config['code'], '   ');
 
         $rst = <<<'NOWDOC'
 .. Extracted from %s
@@ -550,7 +521,7 @@ NOWDOC;
 %s
 NOWDOC;
 
-        $rst = sprintf($rst, $sourceHint, $language, $options, $code);
+        $rst = sprintf($rst, $config['sourceHint'] ?? '', $config['language'] ?? 'none', $options, $codeBlockContent);
 
         return $rst;
     }

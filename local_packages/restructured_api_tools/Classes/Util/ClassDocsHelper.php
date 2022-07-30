@@ -266,7 +266,7 @@ The following list contains all public classes in namespace :php:`%s`.
         $template = $config['template'] ?? '';
 
         $gitHubLink = '';
-        if ($config['gitHubLink']) {
+        if (isset($config['gitHubLink']) && $config['gitHubLink']) {
             $link = str_replace([$config['mainNamespace'], '\\'], ['', '/'], $class);
             $gitHubLink = $config['gitHubLink'] . $link . '.php';
         }

@@ -66,12 +66,15 @@ class ClassHelper
      * @param bool $withComment Include comments?
      * @return string
      */
-    public static function extractMembersFromClass(string $class, array $members, bool $withComment = false): string
+    public static function extractMembersFromClass(array $config): string
     {
+        $withComment = $config['withComment'] = isset($config['withComment']) ? $config['withComment'] : false;
+        $config['withClassComment'] = isset($config['withClassComment']) ? $config['withClassComment'] : $config['withComment'];
+        $class = $config['class'];
         $classReflection = self::getClassReflection($class);
 
         $code = [];
-        foreach ($members as $member) {
+        foreach ($config['members'] as $member) {
             if ($classReflection->hasMethod($member)) {
                 $code['methods'][] = self::getMethodCode($class, $member, $withComment);
             } elseif ($classReflection->hasProperty($member)) {
@@ -91,7 +94,7 @@ class ClassHelper
         $classBody = rtrim($classBody);
 
         $useStatements = self::getUseStatementsRequiredByClassBody($class, $classBody);
-        $classSignature = self::getClassSignature($class, $withComment);
+        $classSignature = self::getClassSignature($class, $config['withClassComment']);
 
         if ($useStatements !== '') {
             $classFrame = $useStatements . "\n" . $classSignature;

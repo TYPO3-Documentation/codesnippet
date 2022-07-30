@@ -17,6 +17,10 @@ use TYPO3\CMS\Core\Core\Environment;
 class FileHelper
 {
 
+    public static function getExtPath(string $filePath): string
+    {
+        return str_replace([Environment::getExtensionsPath() . '/', Environment::getFrameworkBasePath() . '/'], 'EXT:', $filePath);
+    }
 
     public static function getRelativeTargetPath(string $filePath): string
     {
