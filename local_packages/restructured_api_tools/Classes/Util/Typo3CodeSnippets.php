@@ -420,14 +420,11 @@ class Typo3CodeSnippets
     protected function readPhpArray(string $path, array $fields): string
     {
         $phpArray = include $path;
-
         if (empty($fields)) {
             $code = ArrayUtility::arrayExport($phpArray);
         } else {
             $phpArray = ArrayHelper::extractFieldsFromArray($phpArray, $fields);
-            $code = sprintf("'%s' => %s\n",
-                key($phpArray), ArrayUtility::arrayExport(current($phpArray))
-            );
+            $code = ArrayUtility::arrayExport($phpArray);
         }
         return $code;
     }
