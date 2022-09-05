@@ -17,9 +17,15 @@ use TYPO3\CMS\Core\Core\Environment;
 class FileHelper
 {
 
-    public static function getExtPath(string $filePath): string
+    public static function getExtPathFromAbsolutePath(string $filePath): string
     {
         return str_replace([Environment::getExtensionsPath() . '/', Environment::getFrameworkBasePath() . '/'], 'EXT:', $filePath);
+    }
+
+    public static function getAbsolutePathFromExtpath(string $filePath): string
+    {
+        $replacement = Environment::getExtensionsPath() . '/';
+        return str_replace('EXT:', $replacement, $filePath);
     }
 
     public static function getRelativeTargetPath(string $filePath): string
@@ -34,6 +40,9 @@ class FileHelper
 
     public static function getAbsoluteTypo3Path(string $relativePath): string
     {
+        if (str_starts_with($relativePath, 'EXT:')) {
+            return self::getAbsolutePathFromExtpath($relativePath);
+        }
         return FileHelper::getPathBySegments(Environment::getPublicPath(), $relativePath);
     }
 
