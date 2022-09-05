@@ -50,6 +50,10 @@ class CodeSnippetCreator
                         $content = $typo3CodeSnippets->createPhpArrayCodeSnippetFromConfig($entry);
                         $this->writeFile($entry,  $content);
                         break;
+                    case 'createJsonCodeSnippet':
+                        $content = $typo3CodeSnippets->createJsonCodeSnippet($entry);
+                        $this->writeFile($entry,  $content);
+                        break;
                     default:
                         throw new InvalidConfigurationException('Unknown action: ' . $entry['action']);
                 }

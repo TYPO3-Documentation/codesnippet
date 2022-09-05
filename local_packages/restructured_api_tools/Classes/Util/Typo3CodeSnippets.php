@@ -127,31 +127,13 @@ class Typo3CodeSnippets
      * @param int[] $emphasizeLines Emphasize particular lines of the code block
      */
     public function createJsonCodeSnippet(
-        string $sourceFile,
-        string $targetFileName,
-        array $fields = [],
-        int $inlineLevel = 99,
-        string $caption = '',
-        string $name = '',
-        bool $showLineNumbers = false,
-        int $lineStartNumber = 0,
-        array $emphasizeLines = []
+        array $config
     ): string {
-        $relativeSourcePath = FileHelper::getRelativeSourcePath($sourceFile);
-        $absoluteSourcePath = FileHelper::getAbsoluteTypo3Path($relativeSourcePath);
+        $absoluteSourcePath = FileHelper::getAbsoluteTypo3Path($config['sourceFile']);
 
-        $code = $this->readJson($absoluteSourcePath, $fields, $inlineLevel);
-
-        $config = [
-            'sourceHint' => $relativeSourcePath,
-            'code' => $code,
-            'language' => 'json',
-            'caption' => $caption,
-            'name' => $name,
-            'showLineNumbers' => $showLineNumbers,
-            'lineStartNumber' => $lineStartNumber,
-            'emphasizeLines' => $emphasizeLines,
-        ];
+        $code = $this->readJson($absoluteSourcePath, $config['fields'], $config['inlineLevel']);
+        $config['language'] = 'json';
+        $config['code'] = $code;
 
         return $this->getCodeBlockRst($config);
     }
@@ -218,7 +200,7 @@ class Typo3CodeSnippets
         $config['code'] = $this->readPhpClass($config);
 
         $classPath = (new \ReflectionClass($config['class']))->getFileName();
-        $classPath = FileHelper::getExtPath($classPath);
+        $classPath = FileHelper::getExtPathFromAbsolutePath($classPath);
 
         $config['sourceHint'] = $config['sourceHint'] ?? $classPath;
         $config['caption'] = $config['caption'] ?? $classPath;
