@@ -1,7 +1,7 @@
 <?php
 
 declare(strict_types=1);
-namespace T3docs\RestructuredApiTools\Util;
+namespace T3docs\Codesnippet\Util;
 
 use TYPO3\CMS\Core\Core\Environment;
 

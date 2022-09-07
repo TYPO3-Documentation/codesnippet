@@ -1,9 +1,9 @@
 services:
 
-  T3docs\RestructuredApiTools\Command\PhpDomainCommand:
+  T3docs\Codesnippet\Command\PhpDomainCommand:
     tags:
       - name: 'console.command'
-        command: 'restructured_api_tools:php_domain'
+        command: 'codesnippet:create'
         description: 'An example description for a command'
         # not required, defaults to false
         hidden: false
