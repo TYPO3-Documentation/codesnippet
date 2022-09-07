@@ -1,0 +1,9 @@
+services:
+
+  T3docs\Codesnippet\Command\PhpDomainCommand:
+    tags:
+      - name: 'console.command'
+        command: 'codesnippet:create'
+        description: 'Create codesnippets'
+        # not required, defaults to false
+        hidden: false

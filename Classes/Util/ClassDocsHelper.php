@@ -1,7 +1,7 @@
 <?php
 
 declare(strict_types=1);
-namespace T3docs\RestructuredApiTools\Util;
+namespace T3docs\Codesnippet\Util;
 
 /*
  * This file is part of the TYPO3 project.
@@ -14,8 +14,8 @@ namespace T3docs\RestructuredApiTools\Util;
 
 use phpDocumentor\Reflection\DocBlockFactory;
 use HaydenPierce\ClassFinder\ClassFinder;
-use T3docs\RestructuredApiTools\Exceptions\ClassNotPublicException;
-use T3docs\RestructuredApiTools\Exceptions\InvalidConfigurationException;
+use T3docs\Codesnippet\Exceptions\ClassNotPublicException;
+use T3docs\Codesnippet\Exceptions\InvalidConfigurationException;
 
 class ClassDocsHelper
 {
@@ -73,7 +73,7 @@ class ClassDocsHelper
 
         foreach ($classes as $class) {
             $fqn = explode('\\', $class);
-            if ($config['pathMode'] === \T3docs\RestructuredApiTools\Util\CodeSnippetCreator::RECURSIVE_PATH) {
+            if ($config['pathMode'] === \T3docs\Codesnippet\Util\CodeSnippetCreator::RECURSIVE_PATH) {
                 $pathPart = str_replace($config['namespace'], '', $class);
                 $pathPart = str_replace('\\', '/', $pathPart);
                 $pathPart = substr($pathPart, 1);

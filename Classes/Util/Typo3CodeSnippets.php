@@ -1,7 +1,7 @@
 <?php
 
 declare(strict_types=1);
-namespace T3docs\RestructuredApiTools\Util;
+namespace T3docs\Codesnippet\Util;
 
 /*
  * This file is part of the TYPO3 project.
@@ -412,7 +412,7 @@ class Typo3CodeSnippets
     }
 
     /**
-     * @throws \T3docs\RestructuredApiTools\Exceptions\ClassNotPublicException
+     * @throws \T3docs\Codesnippet\Exceptions\ClassNotPublicException
      * @throws \ReflectionException
      */
     protected function transformPhpToDocs(string $class, array $members, bool $withCode,
