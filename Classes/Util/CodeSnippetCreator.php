@@ -1,7 +1,7 @@
 <?php
 
 declare(strict_types=1);
-namespace T3docs\RestructuredApiTools\Util;
+namespace T3docs\Codesnippet\Util;
 
 /*
  * This file is part of the TYPO3 project.
@@ -12,7 +12,7 @@ namespace T3docs\RestructuredApiTools\Util;
  * The TYPO3 project - inspiring people to share!
  */
 
-use T3docs\RestructuredApiTools\Exceptions\InvalidConfigurationException;
+use T3docs\Codesnippet\Exceptions\InvalidConfigurationException;
 
 
 class CodeSnippetCreator

@@ -1,5 +1,5 @@
 {
-	"name": "t3docs/restructured-api-tools",
+	"name": "t3docs/codesnippet",
 	"type": "typo3-cms-extension",
 	"description": "This extension packages creates restructured files to document the API",
 	"license": [
@@ -13,7 +13,7 @@
 	],
 	"autoload": {
 		"psr-4": {
-			"T3docs\\RestructuredApiTools\\": "Classes/"
+			"T3docs\\Codesnippet\\": "Classes/"
 		}
 	},
 	"require": {
@@ -21,7 +21,7 @@
 	},
 	"extra": {
 		"typo3/cms": {
-			"extension-key": "restructured_api_tools"
+			"extension-key": "codesnippet"
 		},
 		"branch-alias": {
 			"dev-master": "11.5.x-dev"

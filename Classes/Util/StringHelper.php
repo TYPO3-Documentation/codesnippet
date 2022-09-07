@@ -1,7 +1,7 @@
 <?php
 
 declare(strict_types=1);
-namespace T3docs\RestructuredApiTools\Util;
+namespace T3docs\Codesnippet\Util;
 
 /*
  * This file is part of the TYPO3 project.

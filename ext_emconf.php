@@ -1,7 +1,7 @@
 <?php
 
 $EM_CONF[$_EXTKEY] = [
-    'title' => 'Restructured API tools',
+    'title' => 'Codesnippet generator for TYPO3 documentation',
     'description' => 'This extension packages creates restructured files to document the API',
     'category' => 'distribution',
     'author' => 'Documentation Team',
