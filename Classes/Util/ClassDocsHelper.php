@@ -564,7 +564,7 @@ The following list contains all public classes in namespace :php:`%s`.
         $parameterResolved = [];
         foreach ($parameters as $parameter) {
             $paramName = $parameter->getName();
-            $type = 'unknown';
+            $type = '';
             if ($parameter->getType() instanceof \ReflectionNamedType) {
                 $type = $parameter->getType()->getName();
             } elseif ($parameter->getType() instanceof \ReflectionUnionType) {
@@ -615,17 +615,17 @@ The following list contains all public classes in namespace :php:`%s`.
                     foreach ($paramArray as $param) {
                         $paramCommentExplode = explode(' ', $param->render(), 4);
                         if (sizeof($paramCommentExplode) > 2) {
-                            $paramName = $paramCommentExplode[1];
-                            $type = $paramCommentExplode[2];
+                            $paramName = $paramCommentExplode[2];
+                            $type = $paramCommentExplode[1];
                             $description = $paramCommentExplode[3] ?? '';
                         }
-                        foreach ($parameterResolved as $param) {
-                            if ($param['name'] === $paramName) {
+                        foreach ($parameterResolved as $key => $param) {
+                            if ($parameterResolved[$key]['name'] === $paramName) {
                                 // Type from method reflection is considered more accurate
-                                if (!$param['type']) {
-                                    $param['type'] = $type;
+                                if (!$parameterResolved[$key]['type']) {
+                                    $parameterResolved[$key]['type'] = $type;
                                 }
-                                $param['description'] = $description;
+                                $parameterResolved[$key]['description'] = $description;
                             }
                         }
                     }
@@ -640,7 +640,10 @@ The following list contains all public classes in namespace :php:`%s`.
         $parameterInRst = [];
         foreach ($parameterResolved as $param) {
             if (!$param['description']) {
-                $param['description'] = sprintf('the %s', $param['name']);
+                $param['description'] = sprintf('the %s', str_replace('$', '', $param['name']));
+            }
+            if (!$param['type']) {
+                $param['type'] = 'mixed';
             }
             if ($param['default']) {
                 $parameterInSignature[] = sprintf('%s %s = %s', RstHelper::escapeRst($param['type']), $param['name'], $param['default']);
