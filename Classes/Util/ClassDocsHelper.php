@@ -579,7 +579,7 @@ The following list contains all public classes in namespace :php:`%s`.
             $default = '';
             if ($optional) {
                 try {
-                    $default = var_export($parameter->getDefaultValue(), true);
+                    $default = ArrayHelper::varExportArrayShort($parameter->getDefaultValue(), true);
                 } catch (\ReflectionException $e) {}
             }
             $parameterResolved[] = [

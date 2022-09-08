@@ -81,4 +81,23 @@ class ArrayHelper
 
         return $result;
     }
+
+    /**
+     * PHP var_export() with short array syntax (square brackets) indented 2 spaces.
+     *
+     * NOTE: The only issue is when a string value has `=>\n[`, it will get converted to `=> [`
+     * @link https://www.php.net/manual/en/function.var-export.php
+     */
+    public static function varExportArrayShort(mixed $expression) {
+        $export = var_export($expression, true);
+        $patterns = [
+            "/array \(/" => '[',
+            "/^([ ]*)\)(,?)$/m" => '$1]$2',
+            "/=>[ ]?\n[ ]+\[/" => '=> [',
+            "/([ ]*)(\'[^\']+\') => ([\[\'])/" => '$1$2 => $3',
+        ];
+        $export = preg_replace(array_keys($patterns), array_values($patterns), $export);
+        $export = str_replace("\n", '', $export);
+        return $export;
+    }
 }
