@@ -561,6 +561,7 @@ The following list contains all public classes in namespace :php:`%s`.
         $parameters = $methodReflection->getParameters();
         $parameterInSignature = [];
         $parameterInRst = [];
+        $parameterResolved = [];
         foreach ($parameters as $parameter) {
             $paramName = $parameter->getName();
             $type = 'unknown';
@@ -575,18 +576,19 @@ The following list contains all public classes in namespace :php:`%s`.
                 $type = implode('|', $typeNameArray);
             }
             $optional = $parameter->isOptional();
+            $default = '';
             if ($optional) {
                 try {
                     $default = var_export($parameter->getDefaultValue(), true);
-                    $parameterInSignature[] = sprintf('%s %s = %s', RstHelper::escapeRst($type), $paramName, $default);
-                    $parameterInRst[] = sprintf(':param %s $%s: the %s, default: %s', RstHelper::escapeRst($type), $paramName, $paramName, $default);
-                } catch (\ReflectionException $e) {
-                    $parameterInSignature[] = sprintf('%s %s', RstHelper::escapeRst($type), $paramName);
-                }
-            } else {
-                $parameterInSignature[] = sprintf('%s %s', RstHelper::escapeRst($type), $paramName);
-                $parameterInRst[] = sprintf(':param %s $%s: the %s', RstHelper::escapeRst($type), $paramName, $paramName);
+                } catch (\ReflectionException $e) {}
             }
+            $parameterResolved[] = [
+                'name' =>  '$' . $paramName,
+                'type' => $type,
+                'optional' => $optional,
+                'default' => $default,
+                'description' => ''
+            ];
         }
         $docComment = $methodReflection->getDocComment();
         $comment = '';
@@ -610,26 +612,42 @@ The following list contains all public classes in namespace :php:`%s`.
                 }
                 $paramArray = $docBlock->getTagsByName('param');
                 if (is_array($paramArray) && sizeof($paramArray) > 0) {
-                    // doccoments parameters precede over information from Method reflection
-
-                    $parameterInSignature = [];
-                    $parameterInRst = [];
                     foreach ($paramArray as $param) {
-                        $paramCommentExplode = explode(' ',
-                            $param->render(), 4);
-                        if (sizeof($paramCommentExplode) == 4) {
-                            $parameterInSignature[] = sprintf('%s %s',
-                                $paramCommentExplode[1],
-                                $paramCommentExplode[2]);
-                            $parameterInRst[] = sprintf(':param %s %s: %s',
-                                $paramCommentExplode[1],
-                                $paramCommentExplode[2],
-                                $paramCommentExplode[3]);
+                        $paramCommentExplode = explode(' ', $param->render(), 4);
+                        if (sizeof($paramCommentExplode) > 2) {
+                            $paramName = $paramCommentExplode[1];
+                            $type = $paramCommentExplode[2];
+                            $description = $paramCommentExplode[3] ?? '';
+                        }
+                        foreach ($parameterResolved as $param) {
+                            if ($param['name'] === $paramName) {
+                                // Type from method reflection is considered more accurate
+                                if (!$param['type']) {
+                                    $param['type'] = $type;
+                                }
+                                $param['description'] = $description;
+                            }
                         }
                     }
                 }
             } catch (\Exception) {
                 // doccomment cannot be interpreted
+                // keep data from method reflection
+            }
+        }
+
+        $parameterInSignature = [];
+        $parameterInRst = [];
+        foreach ($parameterResolved as $param) {
+            if (!$param['description']) {
+                $param['description'] = sprintf('the %s', $param['name']);
+            }
+            if ($param['default']) {
+                $parameterInSignature[] = sprintf('%s %s = %s', RstHelper::escapeRst($param['type']), $param['name'], $param['default']);
+                $parameterInRst[] = sprintf(':param %s %s: %s, default: %s', RstHelper::escapeRst($param['type']), $param['name'], $param['description'], $param['default']);
+            } else {
+                $parameterInSignature[] = sprintf('%s %s', RstHelper::escapeRst($param['type']), $param['name']);
+                $parameterInRst[] = sprintf(':param %s %s: %s', RstHelper::escapeRst($param['type']), $param['name'], $param['description']);
             }
         }
         $codeResult = [];
