@@ -38,14 +38,16 @@ class PhpDomainCommand extends Command
         $io = new SymfonyStyle($input, $output);
 
         if ($input->getArgument('config') === null) {
-            $io->error('Please enter the fully qualified name of the class or interface you want to document.');
+            $io->error('Please enter the path to the codesnippets.php relative to
+                the path calling this script');
             return Command::FAILURE;
         }
 
         $configPath = $input->getArgument('config');
         $config = include($configPath . '/codesnippets.php');
         if (!is_array($config)) {
-            $io->error('File ' . $configPath . '/codesnippets.php contains no valid Configuration array.');
+            $io->error('File ' . $configPath . '/codesnippets.php contains no
+                valid Configuration array.');
             return Command::FAILURE;
         }
         $codeSnippedCreator = new CodeSnippetCreator();
