@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace T3docs\Codesnippet\Util;
 
 use TYPO3\CMS\Core\Core\Environment;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /*
  * This file is part of the TYPO3 project.
@@ -22,12 +23,6 @@ class FileHelper
         return str_replace([Environment::getExtensionsPath() . '/', Environment::getFrameworkBasePath() . '/'], 'EXT:', $filePath);
     }
 
-    public static function getAbsolutePathFromExtpath(string $filePath): string
-    {
-        $replacement = Environment::getExtensionsPath() . '/';
-        return str_replace('EXT:', $replacement, $filePath);
-    }
-
     public static function getRelativeTargetPath(string $filePath): string
     {
         return FileHelper::getPathBySegments( $filePath . '.rst.txt');
@@ -41,7 +36,7 @@ class FileHelper
     public static function getAbsoluteTypo3Path(string $relativePath): string
     {
         if (str_starts_with($relativePath, 'EXT:')) {
-            return self::getAbsolutePathFromExtpath($relativePath);
+            return GeneralUtility::getFileAbsFileName($relativePath);
         }
         return FileHelper::getPathBySegments(Environment::getPublicPath(), $relativePath);
     }
