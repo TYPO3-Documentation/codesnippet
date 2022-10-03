@@ -401,6 +401,12 @@ class Typo3CodeSnippets
     protected function readPhpArray(string $path, array $fields): string
     {
         $phpArray = include $path;
+        if ($phpArray === false) {
+            throw new \RuntimeException('File not found: ' . $path);
+        }
+        if (!is_array($phpArray)) {
+            throw new \RuntimeException('File ' . $path . ' did not return an array as expected. ');
+        }
         if (empty($fields)) {
             $code = ArrayUtility::arrayExport($phpArray);
         } else {
