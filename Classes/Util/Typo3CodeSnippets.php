@@ -135,6 +135,9 @@ class Typo3CodeSnippets
         $config['language'] = 'json';
         $config['code'] = $code;
 
+
+        $config['sourceHint'] = $config['sourceFile'];
+
         return $this->getCodeBlockRst($config);
     }
 
@@ -166,7 +169,6 @@ class Typo3CodeSnippets
         array $emphasizeLines = []
     ): string {
         $relativeTargetPath = FileHelper::getRelativeTargetPath($targetFileName);
-        $absoluteTargetPath = FileHelper::getAbsoluteDocumentationPath($relativeTargetPath);
         $relativeSourcePath = FileHelper::getRelativeSourcePath($sourceFile);
         $absoluteSourcePath = FileHelper::getAbsoluteTypo3Path($relativeSourcePath);
 
@@ -199,11 +201,8 @@ class Typo3CodeSnippets
     ): string {
         $config['code'] = $this->readPhpClass($config);
 
-        $classPath = (new \ReflectionClass($config['class']))->getFileName();
-        $classPath = FileHelper::getExtPathFromAbsolutePath($classPath);
-
-        $config['sourceHint'] = $config['sourceHint'] ?? $classPath;
-        $config['caption'] = $config['caption'] ?? $classPath;
+        $config['sourceHint'] = $config['sourceHint'] ?? $config['class'];
+        $config['caption'] = $config['caption']  ?? 'Class ' . RstHelper::escapeRst($config['class']);
         $config['language'] = 'php';
         return $this->getCodeBlockRst($config);
     }
