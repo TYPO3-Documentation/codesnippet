@@ -16,6 +16,7 @@ use phpDocumentor\Reflection\DocBlockFactory;
 use HaydenPierce\ClassFinder\ClassFinder;
 use T3docs\Codesnippet\Exceptions\ClassNotPublicException;
 use T3docs\Codesnippet\Exceptions\InvalidConfigurationException;
+use T3docs\Codesnippet\Utility\PhpDocToRstUtility;
 
 class ClassDocsHelper
 {
@@ -240,14 +241,6 @@ The following list contains all public classes in namespace :php:`%s`.
      *         :returntype: MyFirstClass
      *         :returns: Some cool object
      *
-     * @param string $class Class name, e.g. "TYPO3\CMS\Core\Cache\Backend\FileBackend"
-     * @param array $members Constants, properties and methods to extract from class, e.g. ["freeze", "frozen"]
-     * @param bool $withCode Include code
-     * @param array $allowedModifiers Members with these modifiers are allowed
-     *                              e.g. ["public", "protected"]
-     * @param bool $allowInternal Include Internal methods?
-     * @param bool $allowDeprecated Include Deprecated methods?
-     * @return string
      * @throws ClassNotPublicException
      */
 
@@ -345,7 +338,6 @@ The following list contains all public classes in namespace :php:`%s`.
                 $template,
                 $classReflection->getName(), $classSignature . $classBody);
         }
-
         return $content;
     }
 
@@ -452,6 +444,7 @@ The following list contains all public classes in namespace :php:`%s`.
             if ($docBlock->getDescription()->render()) {
                 $comment .= "\n\n" . $docBlock->getDescription()->render();
             }
+            $comment = PhpDocToRstUtility::convertComment($comment);
         }
         if ($gitHubLink) {
             $comment .= "\n\n";
