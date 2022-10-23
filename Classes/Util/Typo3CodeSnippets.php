@@ -97,10 +97,10 @@ class Typo3CodeSnippets
         // Replace the first multiline comment
         // That is not started by /**
         return preg_replace('/\/\*[^*][\S\s]*?(?=\*\/)\*\//',
-            '/*
+                '/*
  * This file is part of the TYPO3 CMS project. [...]
  */ ',
-            $code)??$code;
+                $code)??$code;
     }
 
     /**
