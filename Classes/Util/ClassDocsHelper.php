@@ -592,6 +592,7 @@ The following list contains all public classes in namespace :php:`%s`.
                 $comment = $docBlock->getSummary();
                 if ($docBlock->getDescription()->render()) {
                     $comment .= "\n\n" . $docBlock->getDescription()->render();
+                    $comment = PhpDocToRstUtility::convertComment($comment);
                 }
                 $returnCommentTagArray = $docBlock->getTagsByName('return');
                 $returnComment = '';
