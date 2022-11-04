@@ -21,7 +21,11 @@ setUpDockerComposeDotEnv() {
         # Your local user
         echo "ROOT_DIR=${ROOT_DIR}"
         echo "HOST_USER=${USER}"
+        echo "TEST_FILE=${TEST_FILE}"
+        echo "PHP_XDEBUG_ON=${PHP_XDEBUG_ON}"
+        echo "PHP_XDEBUG_PORT=${PHP_XDEBUG_PORT}"
         echo "DOCKER_PHP_IMAGE=${DOCKER_PHP_IMAGE}"
+        echo "EXTRA_TEST_OPTIONS=${EXTRA_TEST_OPTIONS}"
         echo "SCRIPT_VERBOSE=${SCRIPT_VERBOSE}"
         echo "CGLCHECK_DRY_RUN=${CGLCHECK_DRY_RUN}"
         echo "COMPOSER_NORMALIZE_DRY_RUN=${COMPOSER_NORMALIZE_DRY_RUN}"
@@ -47,11 +51,30 @@ Options:
             - composerUpdate: "composer update", handy if host has no PHP
             - composerValidate: "composer validate"
             - lint: PHP linting
+            - unit (default): PHP unit tests
 
     -p <8.1|8.2>
         Specifies the PHP minor version to be used
             - 8.1 (default): use PHP 8.1
             - 8.2: use PHP 8.2
+
+
+    -e "<phpunit additional scan options>"
+        Only with -s unit
+        Additional options to send to phpunit (unit tests).
+        Options starting with "--" must be added after options starting with "-".
+        Example -e "-v --filter canRetrieveValueWithGP" to enable verbose output AND filter tests
+        named "canRetrieveValueWithGP"
+
+    -x
+        Only with -s unit|acceptance
+        Send information to host instance for test or system under test break points. This is especially
+        useful if a local PhpStorm instance is listening on default xdebug port 9003. A different port
+        can be selected with -y
+
+    -y <port>
+        Send xdebug information to a different port than default 9003 if an IDE like PhpStorm
+        is not listening on default port.
 
     -n
         Only with -s cgl, composerNormalize
@@ -182,9 +205,16 @@ case ${TEST_SUITE} in
         SUITE_EXIT_CODE=$?
         docker-compose down
         ;;
+
     lint)
         setUpDockerComposeDotEnv
         docker-compose run lint
+        SUITE_EXIT_CODE=$?
+        docker-compose down
+        ;;
+    unit)
+        setUpDockerComposeDotEnv
+        docker-compose run unit
         SUITE_EXIT_CODE=$?
         docker-compose down
         ;;

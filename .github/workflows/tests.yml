@@ -42,6 +42,9 @@ jobs:
       - name: CGL
         run: Build/Scripts/runTests.sh -n -p ${{ env.php }} -s cgl
 
+      - name: Unit Tests
+        run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -s unit
+
   xliff-lint:
     name: "XLIFF linter"
     runs-on: ubuntu-22.04
