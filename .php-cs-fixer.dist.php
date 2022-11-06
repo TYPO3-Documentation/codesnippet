@@ -2,7 +2,12 @@
 
 $config = \TYPO3\CodingStandards\CsFixerConfig::create();
 $config
-    ->getFinder()->in(__DIR__)->exclude([__DIR__ . '/.Build', __DIR__ . '/.ddev'])
+    ->getFinder()
+    ->in(__DIR__)
+    ->exclude([
+        __DIR__ . '/.Build',
+        __DIR__ . '/.ddev'
+    ])
 ;
 
 $header = <<<EOF
