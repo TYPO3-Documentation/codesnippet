@@ -1,6 +1,20 @@
 <?php
 
 declare(strict_types=1);
+
+/*
+ * This file is part of the TYPO3 CMS project.
+ *
+ * It is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License, either version 2
+ * of the License, or any later version.
+ *
+ * For the full copyright and license information, please read the
+ * LICENSE.txt file that was distributed with this source code.
+ *
+ * The TYPO3 project - inspiring people to share!
+ */
+
 namespace T3docs\Codesnippet\Util;
 
 /*
@@ -82,13 +96,17 @@ class ClassHelper
             } elseif ($classReflection->hasConstant($member)) {
                 $code['constants'][] = self::getConstantCode($class, $member);
             } else {
-                throw new \ReflectionException(sprintf(
-                    'Cannot extract constant nor property nor method "%s" from class "%s"', $member, $class)
+                throw new \ReflectionException(
+                    sprintf(
+                        'Cannot extract constant nor property nor method "%s" from class "%s"',
+                        $member,
+                        $class
+                    )
                 );
             }
         }
 
-        $classBody = isset($code['constants']) ? implode("", $code['constants']) . "\n" : '';
+        $classBody = isset($code['constants']) ? implode('', $code['constants']) . "\n" : '';
         $classBody .= isset($code['properties']) ? implode("\n", $code['properties']) . "\n" : '';
         $classBody .= isset($code['methods']) ? implode("\n", $code['methods']) . "\n" : '';
         $classBody = rtrim($classBody);
@@ -127,7 +145,7 @@ class ClassHelper
             }
         }
 
-        return implode("", $useStatementsRequired);
+        return implode('', $useStatementsRequired);
     }
 
     public static function getUseStatements(string $class): string
@@ -151,7 +169,7 @@ class ClassHelper
 
         // SplFileObject locks the file, so null it when no longer needed
         $splFileObject = null;
-        return implode("", $result);
+        return implode('', $result);
     }
 
     public static function getAliasFromUseStatement(string $useStatement): string
@@ -222,7 +240,7 @@ class ClassHelper
 
         // SplFileObject locks the file, so null it when no longer needed
         $splFileObject = null;
-        return implode("", $result);
+        return implode('', $result);
     }
 
     /**
@@ -292,7 +310,7 @@ class ClassHelper
 
         // SplFileObject locks the file, so null it when no longer needed
         $splFileObject = null;
-        return implode("", $result);
+        return implode('', $result);
     }
 
     protected static function getMethodReflection(string $class, string $method): \ReflectionMethod
@@ -302,7 +320,7 @@ class ClassHelper
             self::$reflectors[$class] = $reflector;
         }
 
-        return (self::$reflectors[$class])->getMethod($method);
+        return self::$reflectors[$class]->getMethod($method);
     }
 
     /**
@@ -345,7 +363,7 @@ class ClassHelper
 
         // SplFileObject locks the file, so null it when no longer needed
         $splFileObject = null;
-        return implode("", $result);
+        return implode('', $result);
     }
 
     /**
@@ -387,6 +405,6 @@ class ClassHelper
 
         // SplFileObject locks the file, so null it when no longer needed
         $splFileObject = null;
-        return implode("", $result);
+        return implode('', $result);
     }
 }

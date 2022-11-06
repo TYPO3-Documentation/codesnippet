@@ -1,6 +1,20 @@
 <?php
 
 declare(strict_types=1);
+
+/*
+ * This file is part of the TYPO3 CMS project.
+ *
+ * It is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License, either version 2
+ * of the License, or any later version.
+ *
+ * For the full copyright and license information, please read the
+ * LICENSE.txt file that was distributed with this source code.
+ *
+ * The TYPO3 project - inspiring people to share!
+ */
+
 namespace T3docs\Codesnippet\Util;
 
 /*
@@ -88,7 +102,8 @@ class ArrayHelper
      * NOTE: The only issue is when a string value has `=>\n[`, it will get converted to `=> [`
      * @link https://www.php.net/manual/en/function.var-export.php
      */
-    public static function varExportArrayShort(mixed $expression) {
+    public static function varExportArrayShort(mixed $expression)
+    {
         $export = var_export($expression, true);
         $patterns = [
             "/array \(/" => '[',
