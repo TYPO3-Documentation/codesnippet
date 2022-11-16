@@ -120,6 +120,8 @@ else
 fi
 TEST_SUITE="cgl"
 PHP_VERSION="8.1"
+PHP_XDEBUG_ON=0
+PHP_XDEBUG_PORT=9003
 SCRIPT_VERBOSE=0
 CGLCHECK_DRY_RUN=""
 COMPOSER_NORMALIZE_DRY_RUN=""
@@ -137,6 +139,9 @@ while getopts ":s:p:nhuv" OPT; do
             ;;
         p)
             PHP_VERSION=${OPTARG}
+            ;;
+        x)
+            PHP_XDEBUG_ON=1
             ;;
         h)
             echo "${HELP}"
