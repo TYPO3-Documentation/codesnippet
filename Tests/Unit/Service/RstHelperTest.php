@@ -28,21 +28,31 @@ namespace TYPO3\CMS\Styleguide\Tests\Unit\Service;
  * The TYPO3 project - inspiring people to share!
  */
 
-use T3docs\Codesnippet\Util\StringHelper;
+use T3docs\Codesnippet\Util\RstHelper;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
 /**
  * Test case
  */
-class StringHelperTest extends UnitTestCase
+class RstHelperTest extends UnitTestCase
 {
     /**
      * @test
      */
-    public function indentMultilineTextIndentsOneLine(): void
+    public function escapeRstDuplicateABackslash(): void
     {
-        $input = 'Lorem Ipsum Dolor';
-        $expected = '    ' . $input;
-        self::assertEquals($expected, StringHelper::indentMultilineText($input, '    '));
+        $input = '\\Lorem\\Ipsum\\';
+        $expected = '\\\\Lorem\\\\Ipsum\\\\';
+        self::assertEquals($expected, RstHelper::escapeRst($input));
+    }
+
+    /**
+     * @test
+     */
+    public function escapeRstDuplicatesAllBackslashes(): void
+    {
+        $input = '\\Lorem\\Ipsum\\';
+        $expected = '\\\\Lorem\\\\Ipsum\\\\';
+        self::assertEquals($expected, RstHelper::escapeRst($input));
     }
 }

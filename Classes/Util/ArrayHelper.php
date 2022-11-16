@@ -106,13 +106,14 @@ class ArrayHelper
     {
         $export = var_export($expression, true);
         $patterns = [
+            "/array \(\n\s*\)/" => '[]',
             "/array \(/" => '[',
             "/^([ ]*)\)(,?)$/m" => '$1]$2',
             "/=>[ ]?\n[ ]+\[/" => '=> [',
             "/([ ]*)(\'[^\']+\') => ([\[\'])/" => '$1$2 => $3',
         ];
         $export = preg_replace(array_keys($patterns), array_values($patterns), $export);
-        $export = str_replace("\n", '', $export);
+        //  $export = str_replace("\n", '', $export);
         return $export;
     }
 }
