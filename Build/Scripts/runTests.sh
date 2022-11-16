@@ -125,6 +125,7 @@ PHP_XDEBUG_PORT=9003
 SCRIPT_VERBOSE=0
 CGLCHECK_DRY_RUN=""
 COMPOSER_NORMALIZE_DRY_RUN=""
+PHP_CS_FIXER_IGNORE_ENV=1
 
 # Option parsing
 # Reset in case getopts has been used previously in the shell

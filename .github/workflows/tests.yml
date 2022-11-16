@@ -20,30 +20,29 @@ jobs:
       - name: Lint PHP
         run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -s lint
 
+      - name: Unit Tests
+        run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -s unit
+
   code-quality:
     name: Code Quality
     runs-on: ubuntu-22.04
-    strategy:
-      matrix:
-        php: [ '8.1', '8.2' ]
+    env:
+      php: '8.1'
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
       - name: Install testing system
-        run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -s composerUpdate
+        run: Build/Scripts/runTests.sh -s composerUpdate
 
       - name: Composer validate
-        run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -s composerValidate
+        run: Build/Scripts/runTests.sh -s composerValidate
 
       - name: Composer normalize
-        run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -s composerNormalize -n
+        run: Build/Scripts/runTests.sh -s composerNormalize -n
 
       - name: CGL
-        run: Build/Scripts/runTests.sh -n -p ${{ matrix.php }} -s cgl
-
-      - name: Unit Tests
-        run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -s unit
+        run: Build/Scripts/runTests.sh -n -s cgl
 
   xliff-lint:
     name: "XLIFF linter"
