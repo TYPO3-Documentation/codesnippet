@@ -20,7 +20,7 @@
 >
     <testsuites>
         <testsuite name="Unit tests">
-            <directory>../Tests/Unit/</directory>
+            <directory>../../Tests/Unit/</directory>
         </testsuite>
     </testsuites>
     <php>

@@ -1,5 +1,9 @@
 .idea
 .Build
+.cache
+composer.json.orig
+composer.json.testing
 composer.lock
 *GENERATED*
 .ddev
+/var/

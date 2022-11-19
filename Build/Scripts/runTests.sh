@@ -22,6 +22,7 @@ setUpDockerComposeDotEnv() {
         echo "ROOT_DIR=${ROOT_DIR}"
         echo "HOST_USER=${USER}"
         echo "TEST_FILE=${TEST_FILE}"
+        echo "TYPO3_VERSION=${TYPO3_VERSION}"
         echo "PHP_XDEBUG_ON=${PHP_XDEBUG_ON}"
         echo "PHP_XDEBUG_PORT=${PHP_XDEBUG_PORT}"
         echo "DOCKER_PHP_IMAGE=${DOCKER_PHP_IMAGE}"
@@ -47,17 +48,19 @@ Options:
     -s <...>
         Specifies which test suite to run
             - cgl: cgl test and fix all php files
+            - clean: Cleanup non-repo files from testing
             - composerNormalize: "composer normalize"
             - composerUpdate: "composer update", handy if host has no PHP
             - composerValidate: "composer validate"
             - lint: PHP linting
             - unit (default): PHP unit tests
 
-    -p <8.1|8.2>
+    -p <7.4|8.0|8.1|8.2>
         Specifies the PHP minor version to be used
-            - 8.1 (default): use PHP 8.1
+            - 7.4 (default): use PHP 7.4
+            - 8.0: use PHP 8.0
+            - 8.1: use PHP 8.1
             - 8.2: use PHP 8.2
-
 
     -e "<phpunit additional scan options>"
         Only with -s unit
@@ -65,6 +68,13 @@ Options:
         Options starting with "--" must be added after options starting with "-".
         Example -e "-v --filter canRetrieveValueWithGP" to enable verbose output AND filter tests
         named "canRetrieveValueWithGP"
+
+    -t <11.5|12.0|main>
+        Only with -s composerUpdate
+        Specifies the TYPO3 core major version to be used
+            - 11.5 (default): use TYPO3 core v10
+            - 12.0: use TYPO3 core v12.0
+            - main: use TYPO3 core main
 
     -x
         Only with -s unit|acceptance
@@ -119,44 +129,60 @@ else
   ROOT_DIR=`realpath ${PWD}/../../`
 fi
 TEST_SUITE="cgl"
-PHP_VERSION="8.1"
+PHP_VERSION="7.4"
+TYPO3_VERSION="11.5"
 PHP_XDEBUG_ON=0
 PHP_XDEBUG_PORT=9003
 SCRIPT_VERBOSE=0
 CGLCHECK_DRY_RUN=""
 COMPOSER_NORMALIZE_DRY_RUN=""
-PHP_CS_FIXER_IGNORE_ENV=1
 
 # Option parsing
 # Reset in case getopts has been used previously in the shell
 OPTIND=1
 # Array for invalid options
 INVALID_OPTIONS=();
-# Simple option parsing based on getopts (! not getopt)
-while getopts ":s:p:nhuv" OPT; do
+# Simple option parsing based on getopts (! not getopt). GNU getopts is available on linux and mac systems,
+# where GNU getop may be not installed on mac systems.
+while getopts ":s:p:t:e:xynhuv" OPT; do
     case ${OPT} in
-        s)
-            TEST_SUITE=${OPTARG}
-            ;;
-        p)
-            PHP_VERSION=${OPTARG}
-            ;;
-        x)
-            PHP_XDEBUG_ON=1
+        e)
+            EXTRA_TEST_OPTIONS=${OPTARG}
             ;;
         h)
             echo "${HELP}"
             exit 0
             ;;
+        s)
+            TEST_SUITE=${OPTARG}
+            ;;
+        t)
+            TYPO3_VERSION=${OPTARG}
+            if ! [[ ${TYPO3_VERSION} =~ ^(11.5|12.0|main)$ ]]; then
+                INVALID_OPTIONS+=("t ${OPTARG}")
+            fi
+            ;;
         n)
             CGLCHECK_DRY_RUN="-n"
             COMPOSER_NORMALIZE_DRY_RUN="--dry-run"
+            ;;
+        p)
+            PHP_VERSION=${OPTARG}
+            if ! [[ ${PHP_VERSION} =~ ^(7.4|8.0|8.1|8.2)$ ]]; then
+                INVALID_OPTIONS+=("p ${OPTARG}")
+            fi
             ;;
         u)
             TEST_SUITE=update
             ;;
         v)
             SCRIPT_VERBOSE=1
+            ;;
+        x)
+            PHP_XDEBUG_ON=1
+            ;;
+        y)
+            PHP_XDEBUG_PORT=${OPTARG}
             ;;
         \?)
             INVALID_OPTIONS+=(${OPTARG})
@@ -178,8 +204,19 @@ if [ ${#INVALID_OPTIONS[@]} -ne 0 ]; then
     exit 1
 fi
 
-# Move "8.1" to "php81", the latter is the docker container name
+# Move "7.4" to "php74", the latter is the docker container name
 DOCKER_PHP_IMAGE=`echo "php${PHP_VERSION}" | sed -e 's/\.//'`
+
+# Set $1 to first mass argument, this is the optional test file or test directory to execute
+shift $((OPTIND - 1))
+TEST_FILE=${1}
+if [ -n "${1}" ]; then
+    TEST_FILE="Web/typo3conf/ext/codesnippet/${1}"
+fi
+
+if [ ${SCRIPT_VERBOSE} -eq 1 ]; then
+    set -x
+fi
 
 # Suite execution
 case ${TEST_SUITE} in
@@ -193,6 +230,14 @@ case ${TEST_SUITE} in
         SUITE_EXIT_CODE=$?
         docker-compose down
         ;;
+    clean)
+        rm -rf \
+          ../../composer.lock \
+          ../../.Build/ \
+          ../../.cache/ \
+          ../../composer.json.testing \
+          ../../var/
+        ;;
     composerNormalize)
         setUpDockerComposeDotEnv
         docker-compose run composer_normalize
@@ -201,7 +246,13 @@ case ${TEST_SUITE} in
         ;;
     composerUpdate)
         setUpDockerComposeDotEnv
+        cp ../../composer.json ../../composer.json.orig
+        if [ -f "../../composer.json.testing" ]; then
+            cp ../../composer.json ../../composer.json.orig
+        fi
         docker-compose run composer_update
+        cp ../../composer.json ../../composer.json.testing
+        mv ../../composer.json.orig ../../composer.json
         SUITE_EXIT_CODE=$?
         docker-compose down
         ;;
@@ -211,7 +262,6 @@ case ${TEST_SUITE} in
         SUITE_EXIT_CODE=$?
         docker-compose down
         ;;
-
     lint)
         setUpDockerComposeDotEnv
         docker-compose run lint

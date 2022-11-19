@@ -14,11 +14,11 @@ services:
              set -x
            fi
            php -v | grep '^PHP';
-           php -dxdebug.mode=off \
+           PHP_CS_FIXER_IGNORE_ENV=1 php -dxdebug.mode=off \
              .Build/bin/php-cs-fixer fix \
                -v \
                ${CGLCHECK_DRY_RUN} \
-               --config=.php-cs-fixer.dist.php  \
+               --config=Build/php-cs-fixer/.php-cs-fixer.dist.php  \
                --using-cache=no .
          "
 
@@ -28,6 +28,8 @@ services:
       volumes:
          - ${ROOT_DIR}:${ROOT_DIR}
       working_dir: ${ROOT_DIR}
+      extra_hosts:
+         - "host.docker.internal:host-gateway"
       environment:
          COMPOSER_CACHE_DIR: ".Build/.cache/composer"
       command: >
@@ -36,12 +38,32 @@ services:
              set -x
            fi
            php -v | grep '^PHP';
-           if [ ${DOCKER_PHP_IMAGE} = "php82" ]; then
-             # @todo: Needed until prophecy (req by phpunit) allows PHP 8.2, https://github.com/phpspec/prophecy/issues/556
-             composer update --no-progress --no-interaction --ignore-platform-req=php+
-           else
-             composer update --no-progress --no-interaction;
+         
+           if [ ${TYPO3_VERSION} == "11.5" ]; then
+               composer rem --dev "sbuerk/typo3-cmscomposerinstallers-testingframework-bridge" --no-update
+               composer req --dev --no-update \
+                  typo3/cms-composer-installers:^3.0
+               composer req typo3/cms-core:^11.5 --no-update
            fi
+           if [ ${TYPO3_VERSION} == "12.0" ]; then
+               composer req --dev --no-update \
+                  "sbuerk/typo3-cmscomposerinstallers-testingframework-bridge":^0.0.1
+               composer req typo3/cms-core:~12.0@dev -W --no-update
+           fi         
+           if [ ${TYPO3_VERSION} == "main" ]; then
+               composer req --dev --no-update \
+                  "sbuerk/typo3-cmscomposerinstallers-testingframework-bridge":^0.0.1 \
+                  typo3/cms-composer-installers:^5.0 \
+                  typo3/cms-backend:dev-main \
+                  typo3/cms-recordlist:dev-main \
+                  typo3/cms-frontend:dev-main \
+                  typo3/cms-extbase:dev-main \
+                  typo3/cms-fluid:dev-main \
+                  typo3/cms-install:dev-main
+               composer req typo3/cms-core:dev-main -W --no-update
+           fi         
+         
+           composer update --no-progress --no-interaction;
          "
 
    composer_validate:
@@ -50,6 +72,8 @@ services:
       volumes:
          - ${ROOT_DIR}:${ROOT_DIR}
       working_dir: ${ROOT_DIR}
+      extra_hosts:
+         - "host.docker.internal:host-gateway"
       environment:
          COMPOSER_CACHE_DIR: ".Build/.cache/composer"
       command: >
@@ -58,7 +82,7 @@ services:
              set -x
            fi
            php -v | grep '^PHP';
-           composer validate;
+           composer validate --no-check-lock;
          "
 
    composer_normalize:
@@ -67,6 +91,8 @@ services:
       volumes:
          - ${ROOT_DIR}:${ROOT_DIR}
       working_dir: ${ROOT_DIR}
+      extra_hosts:
+         - "host.docker.internal:host-gateway"
       environment:
          COMPOSER_CACHE_DIR: ".Build/.cache/composer"
       command: >
@@ -75,7 +101,7 @@ services:
              set -x
            fi
            php -v | grep '^PHP';
-           composer normalize ${COMPOSER_NORMALIZE_DRY_RUN};
+           composer normalize --no-check-lock --no-update-lock ${COMPOSER_NORMALIZE_DRY_RUN};
          "
 
    lint:
@@ -84,6 +110,8 @@ services:
       volumes:
          - ${ROOT_DIR}:${ROOT_DIR}
       working_dir: ${ROOT_DIR}
+      extra_hosts:
+         - "host.docker.internal:host-gateway"
       command: >
          /bin/sh -c "
            if [ ${SCRIPT_VERBOSE} -eq 1 ]; then
@@ -98,7 +126,7 @@ services:
       user: "${HOST_UID}"
       volumes:
          - ${ROOT_DIR}:${ROOT_DIR}
-      working_dir: ${ROOT_DIR}/.Build
+      working_dir: ${ROOT_DIR}
       extra_hosts:
          - "host.docker.internal:host-gateway"
       command: >
@@ -109,11 +137,11 @@ services:
            php -v | grep '^PHP';
            if [ ${PHP_XDEBUG_ON} -eq 0 ]; then
              XDEBUG_MODE=\"off\" \
-             bin/phpunit -c web/typo3conf/ext/codesnippet/Build/UnitTests.xml ${EXTRA_TEST_OPTIONS} ${TEST_FILE};
+             .Build/bin/phpunit -c Build/php-unit/UnitTests.xml ${EXTRA_TEST_OPTIONS} ${TEST_FILE};
            else
              XDEBUG_MODE=\"debug,develop\" \
              XDEBUG_TRIGGER=\"foo\" \
              XDEBUG_CONFIG=\"client_port=${PHP_XDEBUG_PORT} client_host=host.docker.internal\" \
-             bin/phpunit -c web/typo3conf/ext/codesnippet/Build/UnitTests.xml ${EXTRA_TEST_OPTIONS} ${TEST_FILE};
+             .Build/bin/phpunit -c Build/php-unit/UnitTests.xml ${EXTRA_TEST_OPTIONS} ${TEST_FILE};
            fi
          "

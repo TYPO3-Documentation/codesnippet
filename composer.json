@@ -28,7 +28,8 @@
 		"allow-plugins": {
 			"typo3/cms-composer-installers": true,
 			"typo3/class-alias-loader": true,
-			"ergebnis/composer-normalize": true
+			"ergebnis/composer-normalize": true,
+			"sbuerk/typo3-cmscomposerinstallers-testingframework-bridge": true
 		},
 		"bin-dir": ".Build/bin",
 		"sort-packages": true,
@@ -40,7 +41,7 @@
 		},
 		"typo3/cms": {
 			"extension-key": "codesnippet",
-			"web-dir": ".Build/web"
+			"web-dir": ".Build/Web"
 		}
 	},
 	"scripts": {
