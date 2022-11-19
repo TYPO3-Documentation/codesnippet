@@ -9,6 +9,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - Introduce Testing (#5)
 
 ### Changed
+- Raised minimum PHP version to 8.1 in composer.json (#5)
 
 ### Fixed
 
