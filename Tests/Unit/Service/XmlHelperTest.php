@@ -52,7 +52,7 @@ class XmlHelperTest extends UnitTestCase
  <elem-2>Element 2</elem-2>
 </T3FlexForms>
 NOWDOC;
-        $xPaths = ["/T3FlexForms/elem-1/child-1", "/T3FlexForms/elem-1/child-2"];
+        $xPaths = ['/T3FlexForms/elem-1/child-1', '/T3FlexForms/elem-1/child-2'];
         $expected = <<<'NOWDOC'
 <T3FlexForms>
   <elem-1>
@@ -81,7 +81,7 @@ NOWDOC;
   <elem-2>Element 2</elem-2>
 </T3FlexForms>
 NOWDOC;
-        $xPaths = ["/T3FlexForms/elem-1"];
+        $xPaths = ['/T3FlexForms/elem-1'];
         $expected = <<<'NOWDOC'
 <T3FlexForms>
   <elem-1>
