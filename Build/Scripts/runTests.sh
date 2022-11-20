@@ -55,11 +55,9 @@ Options:
             - lint: PHP linting
             - unit (default): PHP unit tests
 
-    -p <7.4|8.0|8.1|8.2>
+    -p <8.1|8.2>
         Specifies the PHP minor version to be used
-            - 7.4 (default): use PHP 7.4
-            - 8.0: use PHP 8.0
-            - 8.1: use PHP 8.1
+            - 8.1 (default): use PHP 8.1
             - 8.2: use PHP 8.2
 
     -e "<phpunit additional scan options>"
@@ -129,7 +127,7 @@ else
   ROOT_DIR=`realpath ${PWD}/../../`
 fi
 TEST_SUITE="cgl"
-PHP_VERSION="7.4"
+PHP_VERSION="8.1"
 TYPO3_VERSION="11.5"
 PHP_XDEBUG_ON=0
 PHP_XDEBUG_PORT=9003
@@ -168,7 +166,7 @@ while getopts ":s:p:t:e:xynhuv" OPT; do
             ;;
         p)
             PHP_VERSION=${OPTARG}
-            if ! [[ ${PHP_VERSION} =~ ^(7.4|8.0|8.1|8.2)$ ]]; then
+            if ! [[ ${PHP_VERSION} =~ ^(8.1|8.2)$ ]]; then
                 INVALID_OPTIONS+=("p ${OPTARG}")
             fi
             ;;
@@ -204,7 +202,7 @@ if [ ${#INVALID_OPTIONS[@]} -ne 0 ]; then
     exit 1
 fi
 
-# Move "7.4" to "php74", the latter is the docker container name
+# Move "8.1" to "php81", the latter is the docker container name
 DOCKER_PHP_IMAGE=`echo "php${PHP_VERSION}" | sed -e 's/\.//'`
 
 # Set $1 to first mass argument, this is the optional test file or test directory to execute
