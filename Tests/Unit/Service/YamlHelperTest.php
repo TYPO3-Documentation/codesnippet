@@ -47,7 +47,7 @@ mappings:
   myarray: [ 'value1', 'value2' ]
   myobject: { key1: 'value1', key2: 'value2' }
 NOWDOC;
-        $xPaths = ["mappings/myarray", "mappings/myobject/key2"];
+        $xPaths = ['mappings/myarray', 'mappings/myobject/key2'];
         $expected = <<<'NOWDOC'
 mappings:
   myarray:
@@ -71,7 +71,7 @@ mappings:
   myarray: ['value1', 'value2']
   myobject: {key1: 'value1', key2: 'value2'}
 NOWDOC;
-        $xPaths = ["mappings/myarray", "mappings/myobject/key2"];
+        $xPaths = ['mappings/myarray', 'mappings/myobject/key2'];
         $expected = <<<'NOWDOC'
 mappings:
   myarray: [value1, value2]
@@ -80,5 +80,4 @@ mappings:
 NOWDOC;
         self::assertEquals($expected, YamlHelper::extractFieldsFromYaml($input, $xPaths, 2));
     }
-
 }
