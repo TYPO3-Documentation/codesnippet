@@ -111,7 +111,6 @@ class XmlHelper
         $result = self::saveXmlOfNodeDescendants($rootNodeOut);
 
         self::stopCollectingXmlErrors();
-
         return $result;
     }
 
