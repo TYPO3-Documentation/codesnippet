@@ -1,6 +1,20 @@
 <?php
 
 declare(strict_types=1);
+
+/*
+ * This file is part of the TYPO3 CMS project.
+ *
+ * It is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License, either version 2
+ * of the License, or any later version.
+ *
+ * For the full copyright and license information, please read the
+ * LICENSE.txt file that was distributed with this source code.
+ *
+ * The TYPO3 project - inspiring people to share!
+ */
+
 namespace T3docs\Codesnippet\Util;
 
 use TYPO3\CMS\Core\Core\Environment;
@@ -17,7 +31,6 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 class FileHelper
 {
-
     public static function getExtPathFromAbsolutePath(string $filePath): string
     {
         return str_replace([Environment::getExtensionsPath() . '/', Environment::getFrameworkBasePath() . '/'], 'EXT:', $filePath);
@@ -25,12 +38,12 @@ class FileHelper
 
     public static function getRelativeTargetPath(string $filePath): string
     {
-        return FileHelper::getPathBySegments( $filePath . '.rst.txt');
+        return FileHelper::getPathBySegments($filePath . '.rst.txt');
     }
 
     public static function getRelativeSourcePath(string $filePath): string
     {
-        return FileHelper::getPathBySegments( $filePath);
+        return FileHelper::getPathBySegments($filePath);
     }
 
     public static function getAbsoluteTypo3Path(string $relativePath): string
@@ -57,7 +70,7 @@ class FileHelper
                 $folderNames = scandir($path);
                 foreach ($folderNames as $folderName) {
                     $folderPath = self::getRealPath($path . DIRECTORY_SEPARATOR . $folderName);
-                    if (is_dir($folderPath) && $folderName != "." && $folderName != "..") {
+                    if (is_dir($folderPath) && $folderName != '.' && $folderName != '..') {
                         $folders[] = $folderPath;
                         self::getFoldersRecursively($folderPath, $maxDepth, $folders);
                     }
@@ -87,7 +100,7 @@ class FileHelper
                             $files[] = $filePath;
                         }
                     } else {
-                        if ($fileName != "." && $fileName != "..") {
+                        if ($fileName != '.' && $fileName != '..') {
                             self::getFilesByNameRecursively($name, $filePath, $maxDepth, $files);
                         }
                     }
@@ -106,8 +119,7 @@ class FileHelper
                 $subPath = self::getRealPath($path . DIRECTORY_SEPARATOR . $subFolder);
                 if (is_file($subPath)) {
                     unlink($subPath);
-                }
-                elseif (is_dir($subPath) && $subFolder != "." && $subFolder != "..") {
+                } elseif (is_dir($subPath) && $subFolder != '.' && $subFolder != '..') {
                     self::deleteRecursively($subPath);
                 }
             }

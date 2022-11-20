@@ -2,6 +2,19 @@
 
 declare(strict_types=1);
 
+/*
+ * This file is part of the TYPO3 CMS project.
+ *
+ * It is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License, either version 2
+ * of the License, or any later version.
+ *
+ * For the full copyright and license information, please read the
+ * LICENSE.txt file that was distributed with this source code.
+ *
+ * The TYPO3 project - inspiring people to share!
+ */
+
 namespace T3docs\Codesnippet\Util;
 
 /*
@@ -14,7 +27,6 @@ namespace T3docs\Codesnippet\Util;
  */
 
 use Symfony\Component\Filesystem\Exception\FileNotFoundException;
-use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Utility\ArrayUtility;
 
 /**
@@ -38,12 +50,13 @@ class Typo3CodeSnippets
             $params['fields'] ?? [],
             $params['caption'] != '' ? $params['caption'] : str_replace([
                 'typo3/sysext/',
-                'typo3conf/ext/'
+                'typo3conf/ext/',
             ], ['EXT:', 'EXT:'], $params['sourceFile']),
             $params['name'],
             $params['showLineNumbers'],
             $params['lineStartNumber'],
-            $params['emphasizeLines']);
+            $params['emphasizeLines']
+        );
     }
 
     public function createCodeSnippetFromConfig(array $config): string
@@ -69,8 +82,10 @@ class Typo3CodeSnippets
         $config['language'] = $config['language'] !== '' ? $config['language'] : $this->getCodeLanguageByFileExtension($config['sourceFile']);
         $config['relativeSourcePath'] = FileHelper::getRelativeSourcePath($config['sourceFile']);
         $config['absoluteSourcePath'] = FileHelper::getAbsoluteTypo3Path($config['relativeSourcePath']);
-        $config['code'] = $this->processCode($this->read($config['absoluteSourcePath']),
-            $config);
+        $config['code'] = $this->processCode(
+            $this->read($config['absoluteSourcePath']),
+            $config
+        );
         $config['sourceHint'] = $config['relativeSourcePath'];
 
         return $this->getCodeBlockRst($config);
@@ -96,11 +111,13 @@ class Typo3CodeSnippets
     {
         // Replace the first multiline comment
         // That is not started by /**
-        return preg_replace('/\/\*[^*][\S\s]*?(?=\*\/)\*\//',
-                '/*
+        return preg_replace(
+            '/\/\*[^*][\S\s]*?(?=\*\/)\*\//',
+            '/*
  * This file is part of the TYPO3 CMS project. [...]
  */ ',
-                $code)??$code;
+            $code
+        )??$code;
     }
 
     /**
@@ -126,11 +143,13 @@ class Typo3CodeSnippets
     ): string {
         $absoluteSourcePath = FileHelper::getAbsoluteTypo3Path($config['sourceFile']);
 
-        $code = $this->readJson($absoluteSourcePath, $config['fields'],
-            $config['inlineLevel']);
+        $code = $this->readJson(
+            $absoluteSourcePath,
+            $config['fields'],
+            $config['inlineLevel']
+        );
         $config['language'] = 'json';
         $config['code'] = $code;
-
 
         $config['sourceHint'] = $config['sourceFile'];
 
@@ -203,7 +222,6 @@ class Typo3CodeSnippets
         return $this->getCodeBlockRst($config);
     }
 
-
     /**
      * Reads a TYPO3 PHP class file and generates a reST file from it for inclusion.
      *
@@ -232,9 +250,15 @@ class Typo3CodeSnippets
         $relativeTargetPath = FileHelper::getRelativeTargetPath($targetFileName);
         $absoluteTargetPath = FileHelper::getAbsoluteDocumentationPath($relativeTargetPath);
 
-        $code = $this->transformPhpToDocs($class, $members, $withCode,
-            $allowedModifiers, $allowInternal, $allowDeprecated,
-            $includeConstructor);
+        $code = $this->transformPhpToDocs(
+            $class,
+            $members,
+            $withCode,
+            $allowedModifiers,
+            $allowInternal,
+            $allowDeprecated,
+            $includeConstructor
+        );
         $this->writeRst(
             $absoluteTargetPath,
             $class,
@@ -273,7 +297,6 @@ class Typo3CodeSnippets
         $absoluteSourcePath = FileHelper::getAbsoluteTypo3Path($relativeSourcePath);
 
         $code = $this->readXml($absoluteSourcePath, $nodes);
-
 
         $config = [
             'sourceHint' => $relativeSourcePath,
@@ -371,7 +394,8 @@ class Typo3CodeSnippets
                     sprintf(
                         'The programming language of the file "%s" cannot be determined automatically via the ' .
                         'file extension "%s". Please specify the language explicitly.',
-                        $filePath, $fileExtension
+                        $filePath,
+                        $fileExtension
                     ),
                     4001
                 );
@@ -430,9 +454,15 @@ class Typo3CodeSnippets
         bool $allowDeprecated,
         bool $includeConstructor
     ): string {
-        return ClassDocsHelper::extractDocsFromClass($class, $members,
-            $withCode, $allowedModifiers, $allowInternal, $allowDeprecated,
-            $includeConstructor);
+        return ClassDocsHelper::extractDocsFromClass(
+            $class,
+            $members,
+            $withCode,
+            $allowedModifiers,
+            $allowInternal,
+            $allowDeprecated,
+            $includeConstructor
+        );
     }
 
     protected function readPhpClass(array $config): string
@@ -457,13 +487,11 @@ class Typo3CodeSnippets
         return $code;
     }
 
-
     protected function writeRst(
         string $targetPath,
         string $sourceHint,
         string $content
     ): void {
-
         $rst = <<<'NOWDOC'
 .. =========================================================
 .. Automatically generated by the TYPO3 Screenshots project.
@@ -495,21 +523,29 @@ NOWDOC;
             $options[] = ':linenos:';
         }
         if (isset($config['lineStartNumber']) && $config['lineStartNumber'] > 0) {
-            $options[] = sprintf(':lineno-start: %s',
-                $config['lineStartNumber']);
+            $options[] = sprintf(
+                ':lineno-start: %s',
+                $config['lineStartNumber']
+            );
         }
         if (isset($config['emphasizeLines']) && count($config['emphasizeLines']) > 0) {
-            $options[] = sprintf(':emphasize-lines: %s',
-                implode(',', $config['emphasizeLines']));
+            $options[] = sprintf(
+                ':emphasize-lines: %s',
+                implode(',', $config['emphasizeLines'])
+            );
         }
         if (count($options) > 0) {
-            $options = StringHelper::indentMultilineText(implode("\n",
-                    $options), '   ') . "\n";
+            $options = StringHelper::indentMultilineText(implode(
+                "\n",
+                $options
+            ), '   ') . "\n";
         } else {
-            $options = "";
+            $options = '';
         }
-        $codeBlockContent = StringHelper::indentMultilineText($config['code'],
-            '   ');
+        $codeBlockContent = StringHelper::indentMultilineText(
+            $config['code'],
+            '   '
+        );
 
         $rst = <<<'NOWDOC'
 .. Extracted from %s
@@ -519,8 +555,13 @@ NOWDOC;
 %s
 NOWDOC;
 
-        $rst = sprintf($rst, $config['sourceHint'] ?? '',
-            $config['language'] ?? 'none', $options, $codeBlockContent);
+        $rst = sprintf(
+            $rst,
+            $config['sourceHint'] ?? '',
+            $config['language'] ?? 'none',
+            $options,
+            $codeBlockContent
+        );
 
         return $rst;
     }

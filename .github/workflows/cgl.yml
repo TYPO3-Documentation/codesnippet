@@ -1,0 +1,69 @@
+name: code-quality
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint:
+    name: Linting
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        php:
+          # Testing with PHP 7.4 and PHP8.0 is not done by intention. The codesnippet package needs to
+          # handle PHP code and features only available in PHP8.1, thus this is the minimum version we
+          # can test.
+          - '8.1'
+          - '8.2'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Lint PHP
+        run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -s lint
+
+  code-quality:
+    name: Code Quality
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        include:
+          # Testing with PHP 7.4 and PHP8.0 is not done by intention. The codesnippet package needs to
+          # handle PHP code and features only available in PHP8.1, thus this is the minimum version we
+          # can test.
+          - php: '8.1'
+            core: '11.5'
+          - php: '8.1'
+            core: '12.0'
+          - php: '8.2'
+            core: '12.0'
+          - php: '8.1'
+            core: 'main'
+          - php: '8.2'
+            core: 'main'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install testing system
+        run: Build/Scripts/runTests.sh -t ${{ matrix.core }} -p ${{ matrix.php }} -s composerUpdate
+
+      - name: Composer validate
+        run: Build/Scripts/runTests.sh -t ${{ matrix.core }} -p ${{ matrix.php }} -s composerValidate
+
+      - name: Composer normalize
+        run: Build/Scripts/runTests.sh -t ${{ matrix.core }} -p ${{ matrix.php }} -s composerNormalize -n
+
+      - name: CGL
+        run: Build/Scripts/runTests.sh -t ${{ matrix.core }} -p ${{ matrix.php }} -s cgl -n
+
+  xliff-lint:
+    name: "XLIFF linter"
+    runs-on: ubuntu-22.04
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v3
+
+      - name: "XLIFF lint"
+        uses: TYPO3-Continuous-Integration/TYPO3-CI-Xliff-Lint@v1

@@ -1,31 +1,48 @@
 {
 	"name": "t3docs/codesnippet",
-	"type": "typo3-cms-extension",
 	"description": "This extension packages creates restructured files to document the API",
 	"license": [
 		"GPL-2.0+"
 	],
+	"type": "typo3-cms-extension",
 	"authors": [
 		{
 			"name": "Documentation Team",
 			"role": "Developer"
 		}
 	],
+	"require": {
+		"php": "^8.1 || ^8.2",
+		"typo3/cms-core": "^11.5 || ^12.0 || dev-main"
+	},
+	"require-dev": {
+		"ergebnis/composer-normalize": "^2.28",
+		"typo3/coding-standards": "^0.5.5",
+		"typo3/testing-framework": "~7.0@dev"
+	},
 	"autoload": {
 		"psr-4": {
 			"T3docs\\Codesnippet\\": "Classes/"
 		}
 	},
-	"require": {
-		"typo3/cms-core": "^11.5 || ^12.0 || dev-main"
+	"config": {
+		"allow-plugins": {
+			"typo3/cms-composer-installers": true,
+			"typo3/class-alias-loader": true,
+			"ergebnis/composer-normalize": true,
+			"sbuerk/typo3-cmscomposerinstallers-testingframework-bridge": true
+		},
+		"bin-dir": ".Build/bin",
+		"sort-packages": true,
+		"vendor-dir": ".Build/vendor"
 	},
 	"extra": {
-		"typo3/cms": {
-			"extension-key": "codesnippet",
-			"web-dir": ".Build/web"
-		},
 		"branch-alias": {
 			"dev-master": "12.0.x-dev"
+		},
+		"typo3/cms": {
+			"extension-key": "codesnippet",
+			"web-dir": ".Build/Web"
 		}
 	},
 	"scripts": {
@@ -34,14 +51,5 @@
 			"rm .gitignore",
 			"rm .editorconfig"
 		]
-	},
-	"config": {
-		"allow-plugins": {
-			"typo3/cms-composer-installers": true,
-			"typo3/class-alias-loader": true
-		},
-		"bin-dir": ".Build/bin",
-		"sort-packages": true,
-		"vendor-dir": ".Build/vendor"
 	}
 }
