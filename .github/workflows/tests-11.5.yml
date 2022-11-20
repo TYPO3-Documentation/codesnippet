@@ -3,6 +3,8 @@ name: tests 11.5
 on:
   push:
   pull_request:
+  schedule:
+    - cron:  '56 4 * * *'
 
 jobs:
   unit:

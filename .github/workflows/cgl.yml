@@ -3,6 +3,8 @@ name: code-quality
 on:
   push:
   pull_request:
+  schedule:
+    - cron:  '56 4 * * *'
 
 jobs:
   lint:
