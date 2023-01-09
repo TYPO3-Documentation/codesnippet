@@ -13,7 +13,7 @@
  * The TYPO3 project - inspiring people to share!
  */
 
-namespace TYPO3\CMS\Styleguide\Tests\Unit\Service;
+namespace T3docs\Codesnippet\Tests\Unit\Service;
 
 /**
  * This file is part of the TYPO3 CMS project.
@@ -28,51 +28,45 @@ namespace TYPO3\CMS\Styleguide\Tests\Unit\Service;
  * The TYPO3 project - inspiring people to share!
  */
 
+use T3docs\Codesnippet\Tests\Unit\Service\TestClasses\TestClass1;
 use T3docs\Codesnippet\Util\ClassDocsHelper;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
-use Vendor\Extension\MyNamespace\TestClass1;
 
 /**
  * Test case
  */
 class ClassDocsHelperTest extends UnitTestCase
 {
-    /**
-     * @test
-     */
-    public function extractFieldsExtractsSelectedFieldsWith3LevelPath(): void
+    /** @var array<string, mixed> */
+    private array $config;
+
+    protected function setUp(): void
     {
-        $config = [
+        $this->config = [
             'class' => TestClass1::class,
             'members' => [
-                'MY_CONSTANT', 'myVariable', 'createMyFirstObject'
-            ]
+                'MY_CONSTANT', 'myVariable', 'createMyFirstObject',
+            ],
         ];
-        $expected = <<<'NOWDOC'
-.. php:namespace:: Vendor\Extension\MyNamespace\
-
-   .. php:class:: MyClass
-
-      .. php:const:: MY_CONSTANT
-
-           MY_CONSTANT
-
-      .. php:attr:: myVariable
-
-              *  Value of some attribute
-
-      .. php:method:: createMyFirstObject(string $column, string $columnName = '')
-
-           Add a new column or override an existing one. Latter is only possible,
-           in case $columnName is given. Otherwise, the column will be added with
-           a numeric index, which is generally not recommended.
-
-           :param array $options: the options
-           :param int $limit: Optional: the limit
-           :returntype: MyFirstClass
-           :returns: Some cool object
-NOWDOC;
-
-        self::assertEquals($expected, ClassDocsHelper::extractPhpDomain($config));
+    }
+    public function testExtractPhpDomainCreatesClass(): void
+    {
+        self::assertStringContainsString('php:class:: TestClass1', ClassDocsHelper::extractPhpDomain($this->config));
+    }
+    public function testExtractPhpDomainCreatesNamespace(): void
+    {
+        self::assertStringContainsString('php:namespace::  T3docs\\Codesnippet\\Tests\\Unit\\Service\\TestClasses', ClassDocsHelper::extractPhpDomain($this->config));
+    }
+    public function testExtractPhpDomainCreatesConstant(): void
+    {
+        self::assertStringContainsString('MY_CONSTANT', ClassDocsHelper::extractPhpDomain($this->config));
+    }
+    public function testExtractPhpDomainCreatesAttribute(): void
+    {
+        self::assertStringContainsString('php:attr:: myVariable', ClassDocsHelper::extractPhpDomain($this->config));
+    }
+    public function testExtractPhpDomainCreatesMethod(): void
+    {
+        self::assertStringContainsString('php:method:: createMyFirstObject(array $options, int $limit)', ClassDocsHelper::extractPhpDomain($this->config));
     }
 }

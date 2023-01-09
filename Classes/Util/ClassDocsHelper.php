@@ -648,7 +648,7 @@ The following list contains all public classes in namespace :php:`%s`.
                 $docBlock = $docBlockFactory->create($docComment);
                 $deprecations = $docBlock->getTagsByName('deprecated');
                 foreach ($deprecations as $deprecation) {
-                    $comment .= "**Deprecated:** " . $deprecation . "\n\n";
+                    $comment .= '**Deprecated:** ' . $deprecation . "\n\n";
                 }
                 $comment .= $docBlock->getSummary();
                 if ($docBlock->getDescription()->render()) {

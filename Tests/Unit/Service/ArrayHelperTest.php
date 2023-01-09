@@ -13,7 +13,7 @@
  * The TYPO3 project - inspiring people to share!
  */
 
-namespace TYPO3\CMS\Styleguide\Tests\Unit\Service;
+namespace T3docs\Codesnippet\Tests\Unit\Service;
 
 /**
  * This file is part of the TYPO3 CMS project.
