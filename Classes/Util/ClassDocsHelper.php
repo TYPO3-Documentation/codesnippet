@@ -644,12 +644,17 @@ The following list contains all public classes in namespace :php:`%s`.
         $returnComment = '';
         if ($docComment) {
             try {
+                $comment = '';
                 $docBlock = $docBlockFactory->create($docComment);
-                $comment = $docBlock->getSummary();
+                $deprecations = $docBlock->getTagsByName('deprecated');
+                foreach ($deprecations as $deprecation) {
+                    $comment .= "**Deprecated:** " . $deprecation . "\n\n";
+                }
+                $comment .= $docBlock->getSummary();
                 if ($docBlock->getDescription()->render()) {
                     $comment .= "\n\n" . $docBlock->getDescription()->render();
-                    $comment = PhpDocToRstUtility::convertComment($comment);
                 }
+                $comment = PhpDocToRstUtility::convertComment($comment);
                 $returnCommentTagArray = $docBlock->getTagsByName('return');
                 $returnComment = '';
                 if (is_array($returnCommentTagArray) && isset($returnCommentTagArray[0])) {
