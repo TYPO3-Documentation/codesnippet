@@ -25,6 +25,11 @@
 			"T3docs\\Codesnippet\\": "Classes/"
 		}
 	},
+	"autoload-dev": {
+		"psr-4": {
+			"T3docs\\Codesnippet\\Tests\\": "Tests/"
+		}
+	},
 	"config": {
 		"allow-plugins": {
 			"typo3/cms-composer-installers": true,
