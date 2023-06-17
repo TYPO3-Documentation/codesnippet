@@ -653,18 +653,7 @@ The following list contains all public classes in namespace :php:`%s`.
                 $returnCommentTagArray = $docBlock->getTagsByName('return');
                 $returnComment = '';
                 if (is_array($returnCommentTagArray) && isset($returnCommentTagArray[0])) {
-                    $returnCommentExplode = explode(
-                        ' ',
-                        $returnCommentTagArray[0]->render(),
-                        3
-                    );
-                    if (count($returnCommentExplode) == 3) {
-                        $returnComment = str_replace(
-                            "\n",
-                            ' ',
-                            $returnCommentExplode[2]
-                        );
-                    }
+                    $returnComment = str_replace('@return ', '', $returnCommentTagArray[0]->render());
                 }
                 $paramArray = $docBlock->getTagsByName('param');
                 if (is_array($paramArray) && count($paramArray) > 0) {
