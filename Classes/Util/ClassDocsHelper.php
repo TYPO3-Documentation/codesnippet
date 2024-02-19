@@ -286,7 +286,7 @@ The following list contains all public classes in namespace :php:`%s`.
 
         $classReflection = self::getClassReflection($class);
         $isInternal = is_string($classReflection->getDocComment())
-            && str_contains($classReflection->getDocComment(), '@internal');
+            && str_contains($classReflection->getDocComment(), '* @internal');
         if ($isInternal && !$config['includeInternal']) {
             throw new ClassNotPublicException('Class ' . $class . ' is marked as internal.');
         }
@@ -577,7 +577,7 @@ The following list contains all public classes in namespace :php:`%s`.
     ): string {
         $methodReflection = self::getMethodReflection($class, $method);
         $isInternal = is_string($methodReflection->getDocComment())
-            && str_contains($methodReflection->getDocComment(), '@internal');
+            && str_contains($methodReflection->getDocComment(), '* @internal');
         // For some reason $methodReflection->isInternal() is always false
         if (
             (!$allowInternal && $isInternal)
