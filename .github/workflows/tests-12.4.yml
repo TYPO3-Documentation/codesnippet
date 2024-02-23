@@ -1,26 +1,27 @@
-name: tests 12.0
+name: tests 12.4
 
 on:
   push:
   pull_request:
   schedule:
     - cron:  '56 4 * * *'
-    
+
 jobs:
   unit:
     name: Unit Tests
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         php:
           - '8.1'
           - '8.2'
+          - '8.3'
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install testing system
-        run: Build/Scripts/runTests.sh -t 12.0 -p ${{ matrix.php }} -s composerUpdate
+        run: Build/Scripts/runTests.sh -t 12.4 -p ${{ matrix.php }} -s composerUpdate
 
       - name: Unit Tests
-        run: Build/Scripts/runTests.sh -t 12.0 -p ${{ matrix.php }} -s unit
+        run: Build/Scripts/runTests.sh -t 12.4 -p ${{ matrix.php }} -s unit
