@@ -510,10 +510,11 @@ The following list contains all public classes in namespace :php:`%s`.
         $result[] = "\n\n";
         if ($reflectionClass->isInterface()) {
             $result[] = sprintf('.. php:interface:: %s', $classShortName);
-        } elseif ($reflectionClass->isAbstract()) {
-            $result[] = sprintf('.. php:class:: abstract %s', $classShortName);
         } else {
             $result[] = sprintf('.. php:class:: %s', $classShortName);
+        }
+        if ($reflectionClass->isAbstract()) {
+            $result[] = sprintf('   :abstract:', $classShortName);
         }
         $result[] = "\n\n";
         if ($comment) {
