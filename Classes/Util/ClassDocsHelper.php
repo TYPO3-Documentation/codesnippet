@@ -755,7 +755,7 @@ The following list contains all public classes in namespace :php:`%s`.
                 }
                 $typeNames = implode('|', $typeNameArray);
             }
-            $returnPart = sprintf(':returntype: %s', self::escapeClassName($typeNames));
+            $returnPart = sprintf(':returntype: `%s`', $typeNames);
             if ($returnComment) {
                 $returnPart .= "\n" . sprintf(':returns: %s', $returnComment);
             }
