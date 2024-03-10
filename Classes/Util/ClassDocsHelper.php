@@ -513,12 +513,12 @@ The following list contains all public classes in namespace :php:`%s`.
         } else {
             $result[] = sprintf('.. php:class:: %s', $classShortName);
         }
-        if ($reflectionClass->isAbstract()) {
-            $result[] = sprintf('   :abstract:', $classShortName);
+        if ($reflectionClass->isAbstract() && !$reflectionClass->isInterface()) {
+            $result[] = "\n".sprintf('   :abstract:', $classShortName);
         }
         $result[] = "\n\n";
         if ($comment) {
-            $result[] = StringHelper::indentMultilineText($comment, '   ') . "\n\n";
+            $result[] = StringHelper::indentMultilineText($comment, '   ') . . "\n\n";
         }
 
         // SplFileObject locks the file, so null it when no longer needed
