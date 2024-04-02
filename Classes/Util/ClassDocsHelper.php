@@ -275,6 +275,7 @@ The following list contains all public classes in namespace :php:`%s`.
         $allowedModifiers = $config['allowedModifiers'] ?? ['public'];
         $allowInternal = $config['allowInternal'] ?? false;
         $allowDeprecated = $config['allowDeprecated'] ?? false;
+        $includeClassComment = $config['includeClassComment'] ?? true;
         $includeConstructor = $config['includeConstructor'] ?? false;
         $template = $config['template'] ?? '';
 
@@ -378,7 +379,7 @@ The following list contains all public classes in namespace :php:`%s`.
         $classBody = rtrim($classBody);
         $classBody = StringHelper::indentMultilineText($classBody, '   ') . "\n";
 
-        $classSignature = self::getClassSignature($class, $withCode, $classReflection, $gitHubLink);
+        $classSignature = self::getClassSignature($class, $withCode, $classReflection, $gitHubLink, $includeClassComment);
 
         if (!$template) {
             $content = $classSignature . $classBody;
@@ -477,7 +478,7 @@ The following list contains all public classes in namespace :php:`%s`.
      * @param bool $withCode Include code
      * @return string
      */
-    public static function getClassSignature(string $class, bool $withCode, \ReflectionClass $reflectionClass, $gitHubLink=''): string
+    public static function getClassSignature(string $class, bool $withCode, \ReflectionClass $reflectionClass, $gitHubLink='', $includeClassComment=true): string
     {
         $classReflection = self::getClassReflection($class);
         $docBlockFactory = self::getDocBlockFactory();
@@ -487,15 +488,17 @@ The following list contains all public classes in namespace :php:`%s`.
         }
         $splFileObject = new \SplFileObject($classReflection->getFileName());
 
-        $docComment = $classReflection->getDocComment();
         $comment = '';
-        if ($docComment) {
-            $docBlock = $docBlockFactory->create($docComment);
-            $comment = $docBlock->getSummary();
-            if ($docBlock->getDescription()->render()) {
-                $comment .= "\n\n" . $docBlock->getDescription()->render();
+        if ($includeClassComment) {
+            $docComment = $classReflection->getDocComment();
+            if ($docComment) {
+                $docBlock = $docBlockFactory->create($docComment);
+                $comment = $docBlock->getSummary();
+                if ($docBlock->getDescription()->render()) {
+                    $comment .= "\n\n" . $docBlock->getDescription()->render();
+                }
+                $comment = PhpDocToRstUtility::convertComment($comment);
             }
-            $comment = PhpDocToRstUtility::convertComment($comment);
         }
         if ($gitHubLink) {
             $comment .= "\n\n";
