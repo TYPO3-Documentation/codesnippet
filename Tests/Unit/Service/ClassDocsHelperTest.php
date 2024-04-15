@@ -48,6 +48,8 @@ class ClassDocsHelperTest extends UnitTestCase
                 'MY_CONSTANT', 'myVariable', 'createMyFirstObject',
             ],
         ];
+
+        parent::setUp();
     }
     public function testExtractPhpDomainCreatesClass(): void
     {
