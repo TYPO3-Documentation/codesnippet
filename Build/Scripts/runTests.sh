@@ -156,7 +156,7 @@ while getopts ":s:p:t:e:xynhuv" OPT; do
             ;;
         t)
             TYPO3_VERSION=${OPTARG}
-            if ! [[ ${TYPO3_VERSION} =~ ^(11.5|12.0|main)$ ]]; then
+            if ! [[ ${TYPO3_VERSION} =~ ^(12.4|13.0|main)$ ]]; then
                 INVALID_OPTIONS+=("t ${OPTARG}")
             fi
             ;;
