@@ -1,4 +1,4 @@
-name: tests main
+name: tests 13.0
 
 on:
   push:
@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install testing system
-        run: Build/Scripts/runTests.sh -t main -p ${{ matrix.php }} -s composerUpdate
+        run: Build/Scripts/runTests.sh -t 13.0 -p ${{ matrix.php }} -s composerUpdate
 
       - name: Unit Tests
-        run: Build/Scripts/runTests.sh -t main -p ${{ matrix.php }} -s unit
+        run: Build/Scripts/runTests.sh -t 13.0 -p ${{ matrix.php }} -s unit

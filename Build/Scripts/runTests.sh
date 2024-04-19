@@ -67,11 +67,11 @@ Options:
         Example -e "-v --filter canRetrieveValueWithGP" to enable verbose output AND filter tests
         named "canRetrieveValueWithGP"
 
-    -t <11.5|12.0|main>
+    -t <12.4|13.0|main>
         Only with -s composerUpdate
         Specifies the TYPO3 core major version to be used
-            - 11.5 (default): use TYPO3 core v10
-            - 12.0: use TYPO3 core v12.0
+            - 12.4 (default): use TYPO3 core v12
+            - 13.0: use TYPO3 core v13.0
             - main: use TYPO3 core main
 
     -x
@@ -156,7 +156,7 @@ while getopts ":s:p:t:e:xynhuv" OPT; do
             ;;
         t)
             TYPO3_VERSION=${OPTARG}
-            if ! [[ ${TYPO3_VERSION} =~ ^(11.5|12.0|main)$ ]]; then
+            if ! [[ ${TYPO3_VERSION} =~ ^(12.4|13.0|main)$ ]]; then
                 INVALID_OPTIONS+=("t ${OPTARG}")
             fi
             ;;
@@ -166,7 +166,7 @@ while getopts ":s:p:t:e:xynhuv" OPT; do
             ;;
         p)
             PHP_VERSION=${OPTARG}
-            if ! [[ ${PHP_VERSION} =~ ^(8.1|8.2)$ ]]; then
+            if ! [[ ${PHP_VERSION} =~ ^(8.1|8.2|8.3)$ ]]; then
                 INVALID_OPTIONS+=("p ${OPTARG}")
             fi
             ;;
