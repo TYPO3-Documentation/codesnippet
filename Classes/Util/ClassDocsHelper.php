@@ -135,7 +135,8 @@ class ClassDocsHelper
                     unset($rstDirArray[count($rstDirArray) - 1]);
                 }
                 $collectedClassPart = '';
-                $lastKey = end(array_keys($rstDirArray));
+                $arrayKeys = array_keys($rstDirArray);
+                $lastKey = end($arrayKeys);
                 foreach ($rstDirArray as $key => $rstDirPart) {
                     $collectedClassPart .= ($collectedClassPart == '') ? '' : '\\';
                     $collectedClassPart .= $rstDirPart;
@@ -277,6 +278,8 @@ The following list contains all public classes in namespace :php:`%s`.
         $allowDeprecated = $config['allowDeprecated'] ?? false;
         $includeClassComment = $config['includeClassComment'] ?? true;
         $includeConstructor = $config['includeConstructor'] ?? false;
+        $noindexInClass = $config['noindexInClass'] ?? false;
+        $noindexInClassMembers = $config['noindexInClassMembers'] ?? false;
         $template = $config['template'] ?? '';
 
         $gitHubLink = '';
@@ -321,21 +324,24 @@ The following list contains all public classes in namespace :php:`%s`.
                         $allowInternal,
                         $allowDeprecated,
                         $includeConstructor,
-                        $gitHubLink
+                        $gitHubLink,
+                        $noindexInClassMembers
                     );
                 } elseif ($classReflection->hasProperty($member)) {
                     $result['properties'][] = self::getPropertyCode(
                         $class,
                         $member,
                         $withCode,
-                        $modifierSum
+                        $modifierSum,
+                        $noindexInClassMembers
                     );
                 } elseif ($classReflection->hasConstant($member)) {
                     $result['constants'][] = self::getConstantCode(
                         $class,
                         $member,
                         $withCode,
-                        $modifierSum
+                        $modifierSum,
+                        $noindexInClassMembers
                     );
                 } else {
                     throw new \ReflectionException(
@@ -357,7 +363,8 @@ The following list contains all public classes in namespace :php:`%s`.
                     $allowInternal,
                     $allowDeprecated,
                     $includeConstructor,
-                    $gitHubLink
+                    $gitHubLink,
+                    $noindexInClassMembers
                 );
             }
             foreach ($classReflection->getProperties() as $property) {
@@ -365,11 +372,12 @@ The following list contains all public classes in namespace :php:`%s`.
                     $class,
                     $property->getName(),
                     $withCode,
-                    $modifierSum
+                    $modifierSum,
+                    $noindexInClassMembers
                 );
             }
             foreach ($classReflection->getConstants() as $constant => $constantValue) {
-                $result['constants'][] = self::getConstantCode($class, $constant, $withCode, $modifierSum);
+                $result['constants'][] = self::getConstantCode($class, $constant, $withCode, $modifierSum, $noindexInClassMembers);
             }
         }
 
@@ -379,7 +387,7 @@ The following list contains all public classes in namespace :php:`%s`.
         $classBody = rtrim($classBody);
         $classBody = StringHelper::indentMultilineText($classBody, '   ') . "\n";
 
-        $classSignature = self::getClassSignature($class, $withCode, $classReflection, $gitHubLink, $includeClassComment);
+        $classSignature = self::getClassSignature($class, $withCode, $classReflection, $gitHubLink, $includeClassComment, $noindexInClass);
 
         if (!$template) {
             $content = $classSignature . $classBody;
@@ -478,7 +486,14 @@ The following list contains all public classes in namespace :php:`%s`.
      * @param bool $withCode Include code
      * @return string
      */
-    public static function getClassSignature(string $class, bool $withCode, \ReflectionClass $reflectionClass, $gitHubLink='', $includeClassComment=true): string
+    public static function getClassSignature(
+        string $class,
+        bool $withCode,
+        \ReflectionClass $reflectionClass,
+        $gitHubLink='',
+        $includeClassComment=true,
+        $noindexInClass = false,
+    ): string
     {
         $classReflection = self::getClassReflection($class);
         $docBlockFactory = self::getDocBlockFactory();
@@ -516,8 +531,11 @@ The following list contains all public classes in namespace :php:`%s`.
         } else {
             $result[] = sprintf('.. php:class:: %s', $classShortName);
         }
+        if($noindexInClass) {
+            $result[] = "\n".'   :noindex:';
+        }
         if ($reflectionClass->isAbstract() && !$reflectionClass->isInterface()) {
-            $result[] = "\n".sprintf('   :abstract:', $classShortName);
+            $result[] = "\n".'   :abstract:';
         }
         $result[] = "\n\n";
         if ($comment) {
@@ -577,7 +595,8 @@ The following list contains all public classes in namespace :php:`%s`.
         bool $allowInternal,
         bool $allowDeprecated,
         bool $includeConstructor,
-        string $gitHubLink = ''
+        string $gitHubLink = '',
+        bool $noindexInClassMembers = false,
     ): string {
         $methodReflection = self::getMethodReflection($class, $method);
         $isInternal = is_string($methodReflection->getDocComment())
@@ -717,6 +736,9 @@ The following list contains all public classes in namespace :php:`%s`.
         $code = implode('', $codeResult);
 
         $methodHead = sprintf('.. php:method:: %s(%s)', $methodName, implode(', ', $parameterInSignature)) . "\n\n";
+        if ($noindexInClassMembers) {
+            $methodHead = '   :noindex';
+        }
 
         $result = [];
         if ($gitHubLink) {
@@ -820,7 +842,8 @@ The following list contains all public classes in namespace :php:`%s`.
         string $class,
         string $property,
         bool $withCode,
-        int $modifierSum
+        int $modifierSum,
+        bool $noindexInClassMembers,
     ): string {
         $classReflection = self::getClassReflection($class);
         $propertyReflection = $classReflection->getProperty($property);
@@ -848,6 +871,9 @@ The following list contains all public classes in namespace :php:`%s`.
         }
 
         $header = sprintf('.. php:attr:: %s', RstHelper::escapeRst($property)) . "\n\n";
+        if ($noindexInClassMembers) {
+            $header = '   :noindex';
+        }
         $body = [];
         $code = [];
         if ($comment) {
@@ -895,7 +921,8 @@ The following list contains all public classes in namespace :php:`%s`.
         string $class,
         string $constant,
         bool $withCode,
-        int $modifierSum
+        int $modifierSum,
+        bool $noindexInClassMembers,
     ): string {
         $classReflection = self::getClassReflection($class);
         $constantReflection = $classReflection->getConstant($constant);
@@ -906,6 +933,9 @@ The following list contains all public classes in namespace :php:`%s`.
         $splFileObject = new \SplFileObject($classReflection->getFileName());
 
         $header = sprintf('.. php:const:: %s', RstHelper::escapeRst($constant)) . "\n\n";
+        if ($noindexInClassMembers) {
+            $header = '   :noindex';
+        }
         $body = [];
         $body[] = sprintf(':php:`%s`, type %s', var_export($constantReflection, true), gettype($constantReflection)) . "\n\n";
         $code = [];
