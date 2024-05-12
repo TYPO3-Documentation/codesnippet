@@ -735,10 +735,11 @@ The following list contains all public classes in namespace :php:`%s`.
         }
         $code = implode('', $codeResult);
 
-        $methodHead = sprintf('.. php:method:: %s(%s)', $methodName, implode(', ', $parameterInSignature)) . "\n\n";
+        $methodHead = sprintf('.. php:method:: %s(%s)', $methodName, implode(', ', $parameterInSignature)) . "\n";
         if ($noindexInClassMembers) {
-            $methodHead .= '   :noindex:' . "\n\n";
+            $methodHead .= '   :noindex:' . "\n";
         }
+        $methodHead .=  "\n";
 
         $result = [];
         if ($gitHubLink) {
@@ -870,10 +871,11 @@ The following list contains all public classes in namespace :php:`%s`.
             }
         }
 
-        $header = sprintf('.. php:attr:: %s', RstHelper::escapeRst($property)) . "\n\n";
+        $header = sprintf('.. php:attr:: %s', RstHelper::escapeRst($property)) . "\n";
         if ($noindexInClassMembers) {
-            $header .= '   :noindex:' . "\n\n";
+            $header .= '   :noindex:' . "\n";
         }
+        $header .=  "\n";
         $body = [];
         $code = [];
         if ($comment) {
@@ -932,10 +934,11 @@ The following list contains all public classes in namespace :php:`%s`.
         }
         $splFileObject = new \SplFileObject($classReflection->getFileName());
 
-        $header = sprintf('.. php:const:: %s', RstHelper::escapeRst($constant)) . "\n\n";
+        $header = sprintf('.. php:const:: %s', RstHelper::escapeRst($constant)) . "\n";
         if ($noindexInClassMembers) {
-            $header .= '   :noindex:' . "\n\n";
+            $header .= '   :noindex:' . "\n";
         }
+        $header .=  "\n";
         $body = [];
         $body[] = sprintf(':php:`%s`, type %s', var_export($constantReflection, true), gettype($constantReflection)) . "\n\n";
         $code = [];
