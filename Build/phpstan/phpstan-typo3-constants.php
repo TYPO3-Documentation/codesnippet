@@ -13,9 +13,6 @@
  * The TYPO3 project - inspiring people to share!
  */
 
-namespace T3docs\Codesnippet\Tests\Unit\Service\TestClasses;
-
-class MySecondClass
-{
-    public function __construct() {}
-}
+defined('LF') ?: define('LF', chr(10));
+defined('CR') ?: define('CR', chr(13));
+defined('CRLF') ?: define('CRLF', CR . LF);

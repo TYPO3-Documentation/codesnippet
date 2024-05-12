@@ -52,7 +52,7 @@ class MathHelper
         int $width,
         int $height,
         int $outerWidth,
-        int $outerHeight
+        int $outerHeight,
     ): array {
         $x = $x < 0 ? $outerWidth - -$x : $x;
         $y = $y < 0 ? $outerHeight - -$y : $y;

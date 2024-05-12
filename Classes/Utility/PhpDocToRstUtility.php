@@ -47,7 +47,7 @@ final class PhpDocToRstUtility
                 $code = StringHelper::indentMultilineText($matches[2], '    ');
                 return '..  code-block:: php' . LF . $code;
             },
-            $comment
+            $comment,
         );
         return $comment;
     }

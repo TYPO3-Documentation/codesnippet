@@ -57,7 +57,7 @@ class FileHelper
     public static function getAbsoluteDocumentationPath(string $relativePath): string
     {
         return FileHelper::getPathBySegments(
-            $relativePath
+            $relativePath,
         );
     }
 
@@ -137,7 +137,7 @@ class FileHelper
      */
     public static function getRealPath(string $path): string
     {
-        return strpos($path, 'vfs://') === 0 ? $path : realpath($path);
+        return str_starts_with($path, 'vfs://') ? $path : realpath($path);
     }
 
     /**
@@ -172,7 +172,7 @@ class FileHelper
 
     public static function isAbsolutePath(string $path): bool
     {
-        return strpos($path, '://') !== false || strpos($path, DIRECTORY_SEPARATOR) === 0;
+        return str_contains($path, '://')   || str_starts_with($path, DIRECTORY_SEPARATOR);
     }
 
     /**
@@ -207,6 +207,6 @@ class FileHelper
 
     public static function isAbsoluteUrl(string $url): bool
     {
-        return strpos($url, '://') !== false || strpos($url, '/') === 0;
+        return str_contains($url, '://')   || str_starts_with($url, '/');
     }
 }

@@ -85,7 +85,7 @@ class ArrayHelper
         $path = str_getcsv($field, '/');
         $pathReverse = array_reverse($path);
 
-        for ($i=0; $i < count($pathReverse); $i++) {
+        for ($i = 0; $i < count($pathReverse); $i++) {
             if ($i === 0) {
                 $result = [$pathReverse[$i] => $value];
             } else {

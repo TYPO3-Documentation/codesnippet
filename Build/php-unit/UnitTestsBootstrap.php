@@ -50,12 +50,12 @@ call_user_func(function () {
 
     $cache = new \TYPO3\CMS\Core\Cache\Frontend\PhpFrontend(
         'core',
-        new \TYPO3\CMS\Core\Cache\Backend\NullBackend('production', [])
+        new \TYPO3\CMS\Core\Cache\Backend\NullBackend('production', []),
     );
     // Set all packages to active
     $packageManager = \TYPO3\CMS\Core\Core\Bootstrap::createPackageManager(
         \TYPO3\CMS\Core\Package\UnitTestPackageManager::class,
-        \TYPO3\CMS\Core\Core\Bootstrap::createPackageCache($cache)
+        \TYPO3\CMS\Core\Core\Bootstrap::createPackageCache($cache),
     );
 
     \TYPO3\CMS\Core\Utility\GeneralUtility::setSingletonInstance(\TYPO3\CMS\Core\Package\PackageManager::class, $packageManager);

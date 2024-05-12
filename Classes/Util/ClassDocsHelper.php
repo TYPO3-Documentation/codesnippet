@@ -71,12 +71,12 @@ class ClassDocsHelper
     }
 
     public static function extractPhpDomainAll(
-        array $config
+        array $config,
     ) {
         if (!$config['namespace']) {
             throw new InvalidConfigurationException('parameter namespace is required');
         }
-        $classes = ClassFinder::getClassesInNamespace($config['namespace'], (int)($config['mode']) ?? 1);
+        $classes = ClassFinder::getClassesInNamespace($config['namespace'], (int) ($config['mode']) ?? 1);
 
         $path = $config['path'] ?? '';
         if (str_ends_with($path, '/')) {
@@ -97,7 +97,7 @@ class ClassDocsHelper
             }
             $classPartArray = explode('\\', $class);
             if (count($classPartArray) > 1) {
-                $shortClass = $classPartArray[count($classPartArray) -1];
+                $shortClass = $classPartArray[count($classPartArray) - 1];
             }
             $extractPhpDomainConfig = [
                 'class' => $class,
@@ -117,7 +117,7 @@ class ClassDocsHelper
 .. include:: /CodeSnippets/%s.rst.txt
 ',
                 RstHelper::escapeRst($shortClass),
-                $outputPath
+                $outputPath,
             );
 
             try {
@@ -126,7 +126,7 @@ class ClassDocsHelper
                     $extractPhpDomainConfig,
                     $content,
                     $rstContent,
-                    $config['overwriteRst'] ?? false
+                    $config['overwriteRst'] ?? false,
                 );
                 // only add Index.rst to directory if there was a rstfile written
                 $rstDir = str_replace($config['namespace'], '', $class);
@@ -200,7 +200,7 @@ The following list contains all public classes in namespace :php:`%s`.
                 RstHelper::escapeRst($addedNameSpaceConfig['short']),
                 $config['namespace'] . '\\' . $addedNameSpace,
                 $config['namespace'] . '\\' . $addedNameSpace,
-                $tree
+                $tree,
             );
             $indexPart = str_replace($config['namespace'], '', $addedNameSpace);
             $indexPart = $config['path'] . str_replace('\\', '/', $indexPart);
@@ -268,7 +268,7 @@ The following list contains all public classes in namespace :php:`%s`.
      * @throws ClassNotPublicException
      */
     public static function extractPhpDomain(
-        array $config
+        array $config,
     ): string {
         $class = $config['class'];
         $members = $config['members'] ?? [];
@@ -325,7 +325,7 @@ The following list contains all public classes in namespace :php:`%s`.
                         $allowDeprecated,
                         $includeConstructor,
                         $gitHubLink,
-                        $noindexInClassMembers
+                        $noindexInClassMembers,
                     );
                 } elseif ($classReflection->hasProperty($member)) {
                     $result['properties'][] = self::getPropertyCode(
@@ -333,7 +333,7 @@ The following list contains all public classes in namespace :php:`%s`.
                         $member,
                         $withCode,
                         $modifierSum,
-                        $noindexInClassMembers
+                        $noindexInClassMembers,
                     );
                 } elseif ($classReflection->hasConstant($member)) {
                     $result['constants'][] = self::getConstantCode(
@@ -341,15 +341,15 @@ The following list contains all public classes in namespace :php:`%s`.
                         $member,
                         $withCode,
                         $modifierSum,
-                        $noindexInClassMembers
+                        $noindexInClassMembers,
                     );
                 } else {
                     throw new \ReflectionException(
                         sprintf(
                             'Cannot extract constant nor property nor method "%s" from class "%s"',
                             $member,
-                            $class
-                        )
+                            $class,
+                        ),
                     );
                 }
             }
@@ -364,7 +364,7 @@ The following list contains all public classes in namespace :php:`%s`.
                     $allowDeprecated,
                     $includeConstructor,
                     $gitHubLink,
-                    $noindexInClassMembers
+                    $noindexInClassMembers,
                 );
             }
             foreach ($classReflection->getProperties() as $property) {
@@ -373,7 +373,7 @@ The following list contains all public classes in namespace :php:`%s`.
                     $property->getName(),
                     $withCode,
                     $modifierSum,
-                    $noindexInClassMembers
+                    $noindexInClassMembers,
                 );
             }
             foreach ($classReflection->getConstants() as $constant => $constantValue) {
@@ -395,7 +395,7 @@ The following list contains all public classes in namespace :php:`%s`.
             $content = sprintf(
                 $template,
                 $classReflection->getName(),
-                $classSignature . $classBody
+                $classSignature . $classBody,
             );
         }
         return $content;
@@ -437,7 +437,7 @@ The following list contains all public classes in namespace :php:`%s`.
         $startLineBody = $classReflection->getStartLine();
 
         $result = [];
-        for ($lineNumber=0; $lineNumber <= $startLineBody; $lineNumber++) {
+        for ($lineNumber = 0; $lineNumber <= $startLineBody; $lineNumber++) {
             $splFileObject->seek($lineNumber);
             $line = $splFileObject->current();
             if (preg_match('#^use [^;]*;#', $line) === 1) {
@@ -490,11 +490,10 @@ The following list contains all public classes in namespace :php:`%s`.
         string $class,
         bool $withCode,
         \ReflectionClass $reflectionClass,
-        $gitHubLink='',
-        $includeClassComment=true,
+        $gitHubLink = '',
+        $includeClassComment = true,
         $noindexInClass = false,
-    ): string
-    {
+    ): string {
         $classReflection = self::getClassReflection($class);
         $docBlockFactory = self::getDocBlockFactory();
 
@@ -531,11 +530,11 @@ The following list contains all public classes in namespace :php:`%s`.
         } else {
             $result[] = sprintf('.. php:class:: %s', $classShortName);
         }
-        if($noindexInClass) {
-            $result[] = "\n".'   :noindex:';
+        if ($noindexInClass) {
+            $result[] = "\n" . '   :noindex:';
         }
         if ($reflectionClass->isAbstract() && !$reflectionClass->isInterface()) {
-            $result[] = "\n".'   :abstract:';
+            $result[] = "\n" . '   :abstract:';
         }
         $result[] = "\n\n";
         if ($comment) {
@@ -606,7 +605,7 @@ The following list contains all public classes in namespace :php:`%s`.
             (!$allowInternal && $isInternal)
             or (!$allowDeprecated && $methodReflection->isDeprecated())
             or (($modifierSum & $methodReflection->getModifiers()) == 0)
-            or (!$includeConstructor && $method=='__construct')
+            or (!$includeConstructor && $method == '__construct')
         ) {
             return '';
         }
@@ -621,9 +620,9 @@ The following list contains all public classes in namespace :php:`%s`.
         $endLineBody = $methodReflection->getEndLine();
 
         $startLineSignature = max($startLineBody - 20, 0);
-        for ($lineNumber=$startLineSignature; $lineNumber <= $startLineBody; $lineNumber++) {
+        for ($lineNumber = $startLineSignature; $lineNumber <= $startLineBody; $lineNumber++) {
             $splFileObject->seek($lineNumber);
-            if (strpos($splFileObject->current(), sprintf('function %s', RstHelper::escapeRst($method))) !== false) {
+            if (str_contains($splFileObject->current(), sprintf('function %s', RstHelper::escapeRst($method)))) {
                 $startLineSignature = $lineNumber;
             }
         }
@@ -728,7 +727,7 @@ The following list contains all public classes in namespace :php:`%s`.
         }
         $codeResult = [];
         if ($withCode) {
-            for ($lineNumber=$startLineSignature; $lineNumber < $endLineBody; $lineNumber++) {
+            for ($lineNumber = $startLineSignature; $lineNumber < $endLineBody; $lineNumber++) {
                 $splFileObject->seek($lineNumber);
                 $codeResult[] = $splFileObject->current();
             }
@@ -746,12 +745,12 @@ The following list contains all public classes in namespace :php:`%s`.
             if ($startLineSignature) {
                 $comment .= sprintf(
                     'See source code on `GitHub <%s>`__.',
-                    $gitHubLink . '#L' . $startLineSignature
+                    $gitHubLink . '#L' . $startLineSignature,
                 );
             } else {
                 $comment .= sprintf(
                     'See source code on `GitHub <%s>`__.',
-                    $gitHubLink
+                    $gitHubLink,
                 );
             }
         }
@@ -944,7 +943,7 @@ The following list contains all public classes in namespace :php:`%s`.
             $line = $splFileObject->fgets();
             if (preg_match(sprintf(
                 '#const[\s]*%s\s*=\s*[^;]*;#',
-                $constant
+                $constant,
             ), $line) === 1) {
                 $code[] = $line;
                 break;

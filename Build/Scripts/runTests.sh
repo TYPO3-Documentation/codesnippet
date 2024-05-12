@@ -1,101 +1,86 @@
 #!/usr/bin/env bash
 
 #
-# TYPO3 core test runner based on docker and docker-compose.
+# EXT:examples test runner based on docker/podman.
 #
 
-# Function to write a .env file in Build/testing-docker
-# This is read by docker-compose and vars defined here are
-# used in Build/testing-docker/docker-compose.yml
-setUpDockerComposeDotEnv() {
-    # Delete possibly existing local .env file if exists
-    [ -e .env ] && rm .env
-    # Set up a new .env file for docker-compose
-    {
-        echo "COMPOSE_PROJECT_NAME=local"
-        # To prevent access rights of files created by the testing, the docker image later
-        # runs with the same user that is currently executing the script. docker-compose can't
-        # use $UID directly itself since it is a shell variable and not an env variable, so
-        # we have to set it explicitly here.
-        echo "HOST_UID=`id -u`"
-        # Your local user
-        echo "ROOT_DIR=${ROOT_DIR}"
-        echo "HOST_USER=${USER}"
-        echo "TEST_FILE=${TEST_FILE}"
-        echo "TYPO3_VERSION=${TYPO3_VERSION}"
-        echo "PHP_XDEBUG_ON=${PHP_XDEBUG_ON}"
-        echo "PHP_XDEBUG_PORT=${PHP_XDEBUG_PORT}"
-        echo "DOCKER_PHP_IMAGE=${DOCKER_PHP_IMAGE}"
-        echo "EXTRA_TEST_OPTIONS=${EXTRA_TEST_OPTIONS}"
-        echo "SCRIPT_VERBOSE=${SCRIPT_VERBOSE}"
-        echo "CGLCHECK_DRY_RUN=${CGLCHECK_DRY_RUN}"
-        echo "COMPOSER_NORMALIZE_DRY_RUN=${COMPOSER_NORMALIZE_DRY_RUN}"
-    } > .env
+cleanUp() {
+    ATTACHED_CONTAINERS=$(${CONTAINER_BIN} ps --filter network=${NETWORK} --format='{{.Names}}')
+    for ATTACHED_CONTAINER in ${ATTACHED_CONTAINERS}; do
+        ${CONTAINER_BIN} rm -f ${ATTACHED_CONTAINER} >/dev/null
+    done
+    ${CONTAINER_BIN} network rm ${NETWORK} >/dev/null
 }
 
-# Load help text into $HELP
-read -r -d '' HELP <<EOF
+cleanCacheFiles() {
+    echo -n "Clean caches ... "
+    rm -rf \
+        .Build/.cache \
+        .php-cs-fixer.cache
+    echo "done"
+}
+
+cleanRenderedDocumentationFiles() {
+    echo -n "Clean rendered documentation files ... "
+    rm -rf \
+        Documentation-GENERATED-temp
+    echo "done"
+}
+
+loadHelp() {
+    # Load help text into $HELP
+    read -r -d '' HELP <<EOF
 EXT:examples test runner. Check code styles, lint PHP files and some other details.
 
-Recommended docker version is >=20.10 for xdebug break pointing to work reliably, and
-a recent docker-compose (tested >=1.21.2) is needed.
-
 Usage: $0 [options] [file]
-
-No arguments: Run all unit tests with PHP 8.1
 
 Options:
     -s <...>
         Specifies which test suite to run
             - cgl: cgl test and fix all php files
-            - clean: Cleanup non-repo files from testing
+            - clean: Clean temporary files
+            - cleanCache: Clean cache folds for files.
+            - cleanRenderedDocumentation: Clean existing rendered documentation output.
+            - composer: "composer" with all remaining arguments dispatched.
             - composerNormalize: "composer normalize"
             - composerUpdate: "composer update", handy if host has no PHP
             - composerValidate: "composer validate"
             - lint: PHP linting
-            - unit (default): PHP unit tests
+            - phpstan: PHPStan static analysis
+            - phpstanBaseline: Generate PHPStan baseline
+            - rector: Apply Rector rules
+            - renderDocumentation
+            - testRenderDocumentation
+            - unit
 
-    -p <8.1|8.2>
+    -b <docker|podman>
+        Container environment:
+            - docker
+            - podman
+
+        If not specified, podman will be used if available. Otherwise, docker is used.
+
+    -p <8.1|8.2|8.3>
         Specifies the PHP minor version to be used
-            - 8.1 (default): use PHP 8.1
+            - 8.1: (default) use PHP 8.1
             - 8.2: use PHP 8.2
+            - 8.3: use PHP 8.3
 
-    -e "<phpunit additional scan options>"
-        Only with -s unit
-        Additional options to send to phpunit (unit tests).
-        Options starting with "--" must be added after options starting with "-".
-        Example -e "-v --filter canRetrieveValueWithGP" to enable verbose output AND filter tests
-        named "canRetrieveValueWithGP"
-
-    -t <12.4|13.0|main>
+    -t <12.4|13.0|13.1|main>
         Only with -s composerUpdate
         Specifies the TYPO3 core major version to be used
             - 12.4 (default): use TYPO3 core v12
             - 13.0: use TYPO3 core v13.0
+            - 13.1: use TYPO3 core v13.1
             - main: use TYPO3 core main
-
-    -x
-        Only with -s unit|acceptance
-        Send information to host instance for test or system under test break points. This is especially
-        useful if a local PhpStorm instance is listening on default xdebug port 9003. A different port
-        can be selected with -y
-
-    -y <port>
-        Send xdebug information to a different port than default 9003 if an IDE like PhpStorm
-        is not listening on default port.
-
     -n
-        Only with -s cgl, composerNormalize
+        Only with -s cgl, composerNormalize, rector
         Activate dry-run in CGL check and composer normalize that does not actively change files and only prints broken ones.
 
     -u
-        Update existing typo3/core-testing-*:latest docker images. Maintenance call to docker pull latest
-        versions of the main php images. The images are updated once in a while and only the youngest
-        ones are supported by core testing. Use this if weird test errors occur. Also removes obsolete
-        image versions of typo3/core-testing-*.
-
-    -v
-        Enable verbose script output. Shows variables and docker commands.
+        Update existing typo3/core-testing-*:latest container images and remove dangling local volumes.
+        New images are published once in a while and only the latest ones are supported by core testing.
+        Use this if weird test errors occur. Also removes obsolete image versions of typo3/core-testing-*.
 
     -h
         Show this help.
@@ -104,65 +89,42 @@ Examples:
     # Run unit tests using PHP 8.1
     ./Build/Scripts/runTests.sh
 EOF
+}
 
-# Test if docker-compose exists, else exit out with error
-if ! type "docker-compose" > /dev/null; then
-  echo "This script relies on docker and docker-compose. Please install" >&2
-  exit 1
+# Test if docker exists, else exit out with error
+if ! type "docker" >/dev/null 2>&1 && ! type "podman" >/dev/null 2>&1; then
+    echo "This script relies on docker or podman. Please install" >&2
+    exit 1
 fi
-
-# Go to the directory this script is located, so everything else is relative
-# to this dir, no matter from where this script is called.
-THIS_SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
-cd "$THIS_SCRIPT_DIR" || exit 1
-
-# Go to directory that contains the local docker-compose.yml file
-cd ../testing-docker || exit 1
 
 # Option defaults
-if ! command -v realpath &> /dev/null; then
-  echo "This script works best with realpath installed" >&2
-  ROOT_DIR="${PWD}/../../"
-else
-  ROOT_DIR=`realpath ${PWD}/../../`
-fi
 TEST_SUITE="cgl"
 PHP_VERSION="8.1"
-TYPO3_VERSION="11.5"
 PHP_XDEBUG_ON=0
 PHP_XDEBUG_PORT=9003
-SCRIPT_VERBOSE=0
-CGLCHECK_DRY_RUN=""
-COMPOSER_NORMALIZE_DRY_RUN=""
+CGLCHECK_DRY_RUN=0
+CI_PARAMS="${CI_PARAMS:-}"
+DOCS_PARAMS="${DOCS_PARAMS:=--pull always}"
+CONTAINER_BIN=""
+CONTAINER_HOST="host.docker.internal"
+TYPO3_VERSION="12.4"
 
-# Option parsing
+# Option parsing updates above default vars
 # Reset in case getopts has been used previously in the shell
 OPTIND=1
 # Array for invalid options
-INVALID_OPTIONS=();
-# Simple option parsing based on getopts (! not getopt). GNU getopts is available on linux and mac systems,
-# where GNU getop may be not installed on mac systems.
-while getopts ":s:p:t:e:xynhuv" OPT; do
+INVALID_OPTIONS=()
+# Simple option parsing based on getopts (! not getopt)
+while getopts "b:s:p:t:xy:nhu" OPT; do
     case ${OPT} in
-        e)
-            EXTRA_TEST_OPTIONS=${OPTARG}
-            ;;
-        h)
-            echo "${HELP}"
-            exit 0
-            ;;
         s)
             TEST_SUITE=${OPTARG}
             ;;
-        t)
-            TYPO3_VERSION=${OPTARG}
-            if ! [[ ${TYPO3_VERSION} =~ ^(12.4|13.0|main)$ ]]; then
-                INVALID_OPTIONS+=("t ${OPTARG}")
+        b)
+            if ! [[ ${OPTARG} =~ ^(docker|podman)$ ]]; then
+                INVALID_OPTIONS+=("${OPTARG}")
             fi
-            ;;
-        n)
-            CGLCHECK_DRY_RUN="-n"
-            COMPOSER_NORMALIZE_DRY_RUN="--dry-run"
+            CONTAINER_BIN=${OPTARG}
             ;;
         p)
             PHP_VERSION=${OPTARG}
@@ -170,11 +132,11 @@ while getopts ":s:p:t:e:xynhuv" OPT; do
                 INVALID_OPTIONS+=("p ${OPTARG}")
             fi
             ;;
-        u)
-            TEST_SUITE=update
-            ;;
-        v)
-            SCRIPT_VERBOSE=1
+        t)
+            TYPO3_VERSION=${OPTARG}
+            if ! [[ ${TYPO3_VERSION} =~ ^(12.4|13.0|13.1|main)$ ]]; then
+                INVALID_OPTIONS+=("t ${OPTARG}")
+            fi
             ;;
         x)
             PHP_XDEBUG_ON=1
@@ -182,11 +144,22 @@ while getopts ":s:p:t:e:xynhuv" OPT; do
         y)
             PHP_XDEBUG_PORT=${OPTARG}
             ;;
+        n)
+            CGLCHECK_DRY_RUN=1
+            ;;
+        h)
+            loadHelp
+            echo "${HELP}"
+            exit 0
+            ;;
+        u)
+            TEST_SUITE=update
+            ;;
         \?)
-            INVALID_OPTIONS+=(${OPTARG})
+            INVALID_OPTIONS+=("${OPTARG}")
             ;;
         :)
-            INVALID_OPTIONS+=(${OPTARG})
+            INVALID_OPTIONS+=("${OPTARG}")
             ;;
     esac
 done
@@ -198,91 +171,235 @@ if [ ${#INVALID_OPTIONS[@]} -ne 0 ]; then
         echo "-"${I} >&2
     done
     echo >&2
-    echo "${HELP}" >&2
+    echo "call \".Build/Scripts/runTests.sh -h\" to display help and valid options"
     exit 1
 fi
 
-# Move "8.1" to "php81", the latter is the docker container name
-DOCKER_PHP_IMAGE=`echo "php${PHP_VERSION}" | sed -e 's/\.//'`
+COMPOSER_ROOT_VERSION="13.0.x-dev"
+HOST_UID=$(id -u)
+USERSET=""
+if [ $(uname) != "Darwin" ]; then
+    USERSET="--user $HOST_UID"
+fi
+
+# Go to the directory this script is located, so everything else is relative
+# to this dir, no matter from where this script is called, then go up two dirs.
+THIS_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null && pwd)"
+cd "$THIS_SCRIPT_DIR" || exit 1
+cd ../../ || exit 1
+ROOT_DIR="${PWD}"
+
+# Create .cache dir: composer need this.
+mkdir -p .Build/.cache
+mkdir -p .Build/Web/typo3temp/var/tests
+
+IMAGE_PREFIX="docker.io/"
+# Non-CI fetches TYPO3 images (php and nodejs) from ghcr.io
+TYPO3_IMAGE_PREFIX="ghcr.io/typo3/"
+CONTAINER_INTERACTIVE="-it --init"
+
+IS_CORE_CI=0
+# ENV var "CI" is set by gitlab-ci. We use it here to distinct 'local' and 'CI' environment.
+if [ "${CI}" == "true" ]; then
+    IS_CORE_CI=1
+    IMAGE_PREFIX=""
+    CONTAINER_INTERACTIVE=""
+fi
+
+# determine default container binary to use: 1. podman 2. docker
+if [[ -z "${CONTAINER_BIN}" ]]; then
+    if type "podman" >/dev/null 2>&1; then
+        CONTAINER_BIN="podman"
+    elif type "docker" >/dev/null 2>&1; then
+        CONTAINER_BIN="docker"
+    fi
+fi
+
+IMAGE_PHP="${TYPO3_IMAGE_PREFIX}core-testing-$(echo "php${PHP_VERSION}" | sed -e 's/\.//'):latest"
+IMAGE_ALPINE="${IMAGE_PREFIX}alpine:3.8"
+IMAGE_DOCS="ghcr.io/typo3-documentation/render-guides:latest"
 
 # Set $1 to first mass argument, this is the optional test file or test directory to execute
 shift $((OPTIND - 1))
-TEST_FILE=${1}
-if [ -n "${1}" ]; then
-    TEST_FILE="Web/typo3conf/ext/codesnippet/${1}"
+
+SUFFIX=$(echo $RANDOM)
+NETWORK="t3docsexamples-${SUFFIX}"
+${CONTAINER_BIN} network create ${NETWORK} >/dev/null
+
+if [ ${CONTAINER_BIN} = "docker" ]; then
+    # docker needs the add-host for xdebug remote debugging. podman has host.container.internal built in
+    CONTAINER_COMMON_PARAMS="${CONTAINER_INTERACTIVE} --rm --network ${NETWORK} --add-host "${CONTAINER_HOST}:host-gateway" ${USERSET} -v ${ROOT_DIR}:${ROOT_DIR} -w ${ROOT_DIR}"
+    CONTAINER_DOCS_PARAMS="${CONTAINER_INTERACTIVE} ${DOCS_PARAMS} --rm --network ${NETWORK} --add-host "${CONTAINER_HOST}:host-gateway" ${USERSET} -v ${ROOT_DIR}:/project"
+else
+    # podman
+    CONTAINER_HOST="host.containers.internal"
+    CONTAINER_COMMON_PARAMS="${CONTAINER_INTERACTIVE} ${CI_PARAMS} --rm --network ${NETWORK} -v ${ROOT_DIR}:${ROOT_DIR} -w ${ROOT_DIR}"
+    CONTAINER_DOCS_PARAMS="${CONTAINER_INTERACTIVE} ${DOCS_PARAMS} --rm --network ${NETWORK} -v ${ROOT_DIR}:/project"
 fi
 
-if [ ${SCRIPT_VERBOSE} -eq 1 ]; then
-    set -x
+if [ ${PHP_XDEBUG_ON} -eq 0 ]; then
+    XDEBUG_MODE="-e XDEBUG_MODE=off"
+    XDEBUG_CONFIG=" "
+else
+    XDEBUG_MODE="-e XDEBUG_MODE=debug -e XDEBUG_TRIGGER=foo"
+    XDEBUG_CONFIG="client_port=${PHP_XDEBUG_PORT} client_host=host.docker.internal"
 fi
 
 # Suite execution
 case ${TEST_SUITE} in
     cgl)
-        # Active dry-run for cgl needs not "-n" but specific options
-        if [[ ! -z ${CGLCHECK_DRY_RUN} ]]; then
-            CGLCHECK_DRY_RUN="--dry-run --diff"
+        if [ "${CGLCHECK_DRY_RUN}" -eq 1 ]; then
+            COMMAND="php -dxdebug.mode=off .Build/bin/php-cs-fixer fix -v --dry-run --diff --config=Build/php-cs-fixer/.php-cs-fixer.dist.php --using-cache=no ."
+        else
+            COMMAND="php -dxdebug.mode=off .Build/bin/php-cs-fixer fix -v --config=Build/php-cs-fixer/.php-cs-fixer.dist.php --using-cache=no ."
         fi
-        setUpDockerComposeDotEnv
-        docker-compose run cgl
+        ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name cgl-${SUFFIX} -e COMPOSER_CACHE_DIR=.Build/.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} /bin/sh -c "${COMMAND}"
         SUITE_EXIT_CODE=$?
-        docker-compose down
         ;;
     clean)
-        rm -rf \
-          ../../composer.lock \
-          ../../.Build/ \
-          ../../.cache/ \
-          ../../composer.json.testing \
-          ../../var/
+        cleanCacheFiles
+        cleanRenderedDocumentationFiles
+        ;;
+    cleanCache)
+        cleanCacheFiles
+        ;;
+    cleanRenderedDocumentation)
+        cleanRenderedDocumentationFiles
+        ;;
+    composer)
+        COMMAND=(composer "$@")
+        ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-command-${SUFFIX} -e COMPOSER_CACHE_DIR=.Build/.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
+        SUITE_EXIT_CODE=$?
         ;;
     composerNormalize)
-        setUpDockerComposeDotEnv
-        docker-compose run composer_normalize
+        if [ "${CGLCHECK_DRY_RUN}" -eq 1 ]; then
+            COMMAND=(composer normalize --no-check-lock --no-update-lock -n)
+        else
+            COMMAND=(composer normalize --no-check-lock --no-update-lock)
+        fi
+        ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-command-${SUFFIX} -e COMPOSER_CACHE_DIR=.Build/.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
         SUITE_EXIT_CODE=$?
-        docker-compose down
         ;;
     composerUpdate)
-        setUpDockerComposeDotEnv
-        cp ../../composer.json ../../composer.json.orig
-        if [ -f "../../composer.json.testing" ]; then
-            cp ../../composer.json ../../composer.json.orig
+        rm -rf .Build/bin/ .Build/typo3 .Build/vendor .Build/Web ./composer.lock
+        cp ${ROOT_DIR}/composer.json ${ROOT_DIR}/composer.json.orig
+        if [ -f "${ROOT_DIR}/composer.json.testing" ]; then
+            cp ${ROOT_DIR}/composer.json ${ROOT_DIR}/composer.json.orig
         fi
-        docker-compose run composer_update
-        cp ../../composer.json ../../composer.json.testing
-        mv ../../composer.json.orig ../../composer.json
+        if [ "${TYPO3_VERSION}" == "12.4" ]; then
+            COMMAND=(composer req typo3/cms-core:~12.4@dev -W --no-update --no-ansi --no-interaction --no-progress)
+            ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-prepare-${SUFFIX} -e COMPOSER_CACHE_DIR=.Build/.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
+        fi
+        if [ "${TYPO3_VERSION}" == "13.0" ]; then
+            COMMAND=(composer req --dev --no-update typo3/cms-backend:~13.0.1@dev typo3/cms-recordlist:~13.0.1@dev typo3/cms-frontend:~13.0.1@dev typo3/cms-extbase:~13.0.1@dev typo3/cms-fluid:~13.0.1@dev typo3/cms-install:~13.0.1@dev --no-update --no-ansi --no-interaction --no-progress)
+            ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-prepare-dev-${SUFFIX} -e COMPOSER_CACHE_DIR=.Build/.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
+            COMMAND=(composer req typo3/cms-core:~13.0.1@dev -W --no-update --no-ansi --no-interaction --no-progress)
+            ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-prepare-${SUFFIX} -e COMPOSER_CACHE_DIR=.Build/.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
+        fi
+        if [ "${TYPO3_VERSION}" == "13.1" ]; then
+            COMMAND=(composer req --dev --no-update typo3/cms-backend:~13.1@dev typo3/cms-recordlist:~13.1@dev typo3/cms-frontend:~13.1@dev typo3/cms-extbase:~13.1@dev typo3/cms-fluid:~13.1@dev typo3/cms-install:~13.1@dev --no-update --no-ansi --no-interaction --no-progress)
+            ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-prepare-dev-${SUFFIX} -e COMPOSER_CACHE_DIR=.Build/.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
+            COMMAND=(composer req typo3/cms-core:~13.1@dev -W --no-update --no-ansi --no-interaction --no-progress)
+            ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-prepare-${SUFFIX} -e COMPOSER_CACHE_DIR=.Build/.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
+        fi
+        if [ "${TYPO3_VERSION}" == "main" ]; then
+            COMMAND=(composer req --dev --no-update typo3/cms-backend:dev-main typo3/cms-recordlist:dev-main typo3/cms-frontend:dev-main typo3/cms-extbase:dev-main typo3/cms-fluid:dev-main typo3/cms-install:dev-main --no-update --no-ansi --no-interaction --no-progress)
+            ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-prepare-dev-${SUFFIX} -e COMPOSER_CACHE_DIR=.Build/.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
+            COMMAND=(composer req typo3/cms-core:dev-main -W --no-update --no-ansi --no-interaction --no-progress)
+            ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-prepare-${SUFFIX} -e COMPOSER_CACHE_DIR=.Build/.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
+        fi
+        COMMAND=(composer update --no-ansi --no-interaction --no-progress)
+        ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-install-${SUFFIX} -e COMPOSER_CACHE_DIR=.Build/.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
         SUITE_EXIT_CODE=$?
-        docker-compose down
+        cp ${ROOT_DIR}/composer.json ${ROOT_DIR}/composer.json.testing
+        mv ${ROOT_DIR}/composer.json.orig ${ROOT_DIR}/composer.json
         ;;
     composerValidate)
-        setUpDockerComposeDotEnv
-        docker-compose run composer_validate
+        COMMAND=(composer validate --no-check-lock "$@")
+        ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-command-${SUFFIX} -e COMPOSER_CACHE_DIR=.Build/.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
         SUITE_EXIT_CODE=$?
-        docker-compose down
         ;;
     lint)
-        setUpDockerComposeDotEnv
-        docker-compose run lint
+        COMMAND="find . -name \\*.php ! -path "./.Build/\\*" -print0 | xargs -0 -n1 -P4 php -dxdebug.mode=off -l >/dev/null"
+        ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-command-${SUFFIX} -e COMPOSER_CACHE_DIR=.Build/.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} /bin/sh -c "${COMMAND}"
         SUITE_EXIT_CODE=$?
-        docker-compose down
         ;;
-    unit)
-        setUpDockerComposeDotEnv
-        docker-compose run unit
+    phpstan)
+        COMMAND="php -dxdebug.mode=off .Build/bin/phpstan --configuration=Build/phpstan/phpstan.neon"
+        ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name phpstan-${SUFFIX} -e COMPOSER_CACHE_DIR=.Build/.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} /bin/sh -c "${COMMAND}"
         SUITE_EXIT_CODE=$?
-        docker-compose down
+        ;;
+    phpstanBaseline)
+        COMMAND="php -dxdebug.mode=off .Build/bin/phpstan --configuration=Build/phpstan/phpstan.neon --generate-baseline=Build/phpstan/phpstan-baseline.neon -v"
+        ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name phpstan-${SUFFIX} -e COMPOSER_CACHE_DIR=.Build/.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} /bin/sh -c "${COMMAND}"
+        SUITE_EXIT_CODE=$?
+        ;;
+    rector)
+        if [ "${CGLCHECK_DRY_RUN}" -eq 1 ]; then
+            COMMAND=(php -dxdebug.mode=off .Build/bin/rector -n --config=Build/rector/rector.php --clear-cache "$@")
+        else
+            COMMAND=(php -dxdebug.mode=off .Build/bin/rector --config=Build/rector/rector.php --clear-cache "$@")
+        fi
+        ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name rector-${SUFFIX} -e COMPOSER_CACHE_DIR=.Build/.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
+        SUITE_EXIT_CODE=$?
+        ;;
+    renderDocumentation)
+        COMMAND=(--config=Documentation "$@")
+        mkdir -p Documentation-GENERATED-temp
+        ${CONTAINER_BIN} run ${CONTAINER_INTERACTIVE} ${CONTAINER_DOCS_PARAMS} --name render-documentation-${SUFFIX} ${IMAGE_DOCS} "${COMMAND[@]}"
+        SUITE_EXIT_CODE=$?
+        ;;
+    testRenderDocumentation)
+        COMMAND=(--config=Documentation --no-progress --fail-on-log "$@")
+        mkdir -p Documentation-GENERATED-temp
+        ${CONTAINER_BIN} run ${CONTAINER_INTERACTIVE} ${CONTAINER_DOCS_PARAMS} --name render-documentation-test-${SUFFIX} ${IMAGE_DOCS} "${COMMAND[@]}"
+        SUITE_EXIT_CODE=$?
         ;;
     update)
-        # pull typo3/core-testing-*:latest versions of those ones that exist locally
-        docker images typo3/core-testing-*:latest --format "{{.Repository}}:latest" | xargs -I {} docker pull {}
+        # pull typo3/core-testing-* versions of those ones that exist locally
+        echo "> pull ${TYPO3_IMAGE_PREFIX}core-testing-* versions of those ones that exist locally"
+        ${CONTAINER_BIN} images "${TYPO3_IMAGE_PREFIX}core-testing-*" --format "{{.Repository}}:{{.Tag}}" | xargs -I {} ${CONTAINER_BIN} pull {}
+        echo ""
         # remove "dangling" typo3/core-testing-* images (those tagged as <none>)
-        docker images typo3/core-testing-* --filter "dangling=true" --format "{{.ID}}" | xargs -I {} docker rmi {}
+        echo "> remove \"dangling\" ${TYPO3_IMAGE_PREFIX}/core-testing-* images (those tagged as <none>)"
+        ${CONTAINER_BIN} images --filter "reference=${TYPO3_IMAGE_PREFIX}/core-testing-*" --filter "dangling=true" --format "{{.ID}}" | xargs -I {} ${CONTAINER_BIN} rmi -f {}
+        echo ""
+        ;;
+    unit)
+        COMMAND="php -dxdebug.mode=off .Build/bin/phpunit -c Build/php-unit/UnitTests.xml"
+        ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name unit-${SUFFIX} -e COMPOSER_CACHE_DIR=.Build/.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} /bin/sh -c "${COMMAND}"
+        SUITE_EXIT_CODE=$?
         ;;
     *)
+        loadHelp
         echo "Invalid -s option argument ${TEST_SUITE}" >&2
         echo >&2
         echo "${HELP}" >&2
         exit 1
+        ;;
 esac
 
+cleanUp
+
+# Print summary
+echo "" >&2
+echo "###########################################################################" >&2
+echo "Result of ${TEST_SUITE}" >&2
+echo "Container runtime: ${CONTAINER_BIN}" >&2
+if [[ ${IS_CORE_CI} -eq 1 ]]; then
+    echo "Environment: CI" >&2
+else
+    echo "Environment: local" >&2
+fi
+echo "PHP: ${PHP_VERSION}" >&2
+echo "TYPO3: ${CORE_VERSION}" >&2
+if [[ ${SUITE_EXIT_CODE} -eq 0 ]]; then
+    echo "SUCCESS" >&2
+else
+    echo "FAILURE" >&2
+fi
+echo "###########################################################################" >&2
+echo "" >&2
+
+# Exit with code of test suite - This script return non-zero if the executed test failed.
 exit $SUITE_EXIT_CODE

@@ -100,8 +100,8 @@ class ClassHelper
                     sprintf(
                         'Cannot extract constant nor property nor method "%s" from class "%s"',
                         $member,
-                        $class
-                    )
+                        $class,
+                    ),
                 );
             }
         }
@@ -159,7 +159,7 @@ class ClassHelper
         $startLineBody = $classReflection->getStartLine();
 
         $result = [];
-        for ($lineNumber=0; $lineNumber <= $startLineBody; $lineNumber++) {
+        for ($lineNumber = 0; $lineNumber <= $startLineBody; $lineNumber++) {
             $splFileObject->seek($lineNumber);
             $line = $splFileObject->current();
             if (preg_match('#^use [^;]*;#', $line) === 1) {
@@ -219,9 +219,9 @@ class ClassHelper
         $endLineBody = $classReflection->getEndLine();
 
         $startLineSignature = max($startLineBody - 20, 0);
-        for ($lineNumber=$startLineSignature; $lineNumber <= $startLineBody; $lineNumber++) {
+        for ($lineNumber = $startLineSignature; $lineNumber <= $startLineBody; $lineNumber++) {
             $splFileObject->seek($lineNumber);
-            if (strpos($splFileObject->current(), sprintf('class %s', $classShortName)) !== false) {
+            if (str_contains($splFileObject->current(), sprintf('class %s', $classShortName))) {
                 $startLineSignature = $lineNumber;
             }
         }
@@ -230,12 +230,12 @@ class ClassHelper
         if ($withComment && $classReflection->getDocComment() !== false) {
             $result[] = self::fixDocCommentIndentation($classReflection->getDocComment()) . "\n";
         }
-        for ($lineNumber=$startLineSignature; $lineNumber <= $startLineBody; $lineNumber++) {
+        for ($lineNumber = $startLineSignature; $lineNumber <= $startLineBody; $lineNumber++) {
             $splFileObject->seek($lineNumber);
             $result[] = $splFileObject->current();
         }
         $result[] = '%s' . "\n";
-        $splFileObject->seek($endLineBody-1);
+        $splFileObject->seek($endLineBody - 1);
         $result[] = $splFileObject->current();
 
         // SplFileObject locks the file, so null it when no longer needed
@@ -292,9 +292,9 @@ class ClassHelper
         $endLineBody = $methodReflection->getEndLine();
 
         $startLineSignature = max($startLineBody - 20, 0);
-        for ($lineNumber=$startLineSignature; $lineNumber <= $startLineBody; $lineNumber++) {
+        for ($lineNumber = $startLineSignature; $lineNumber <= $startLineBody; $lineNumber++) {
             $splFileObject->seek($lineNumber);
-            if (strpos($splFileObject->current(), sprintf('function %s', $method)) !== false) {
+            if (str_contains($splFileObject->current(), sprintf('function %s', $method))) {
                 $startLineSignature = $lineNumber;
             }
         }
@@ -303,7 +303,7 @@ class ClassHelper
         if ($withComment && $methodReflection->getDocComment() !== false) {
             $result[] = self::fixDocCommentIndentation($methodReflection->getDocComment()) . "\n";
         }
-        for ($lineNumber=$startLineSignature; $lineNumber < $endLineBody; $lineNumber++) {
+        for ($lineNumber = $startLineSignature; $lineNumber < $endLineBody; $lineNumber++) {
             $splFileObject->seek($lineNumber);
             $result[] = $splFileObject->current();
         }

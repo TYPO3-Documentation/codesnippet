@@ -36,7 +36,7 @@ class PhpDomainCommand extends Command
             ->addArgument(
                 'config',
                 InputArgument::OPTIONAL,
-                'Enter the fully qualified name of the structure you want to export'
+                'Enter the fully qualified name of the structure you want to export',
             );
     }
 
