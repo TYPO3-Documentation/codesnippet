@@ -737,7 +737,7 @@ The following list contains all public classes in namespace :php:`%s`.
 
         $methodHead = sprintf('.. php:method:: %s(%s)', $methodName, implode(', ', $parameterInSignature)) . "\n\n";
         if ($noindexInClassMembers) {
-            $methodHead = '   :noindex';
+            $methodHead .= '   :noindex:' . "\n\n";
         }
 
         $result = [];
@@ -872,7 +872,7 @@ The following list contains all public classes in namespace :php:`%s`.
 
         $header = sprintf('.. php:attr:: %s', RstHelper::escapeRst($property)) . "\n\n";
         if ($noindexInClassMembers) {
-            $header = '   :noindex';
+            $header .= '   :noindex:' . "\n\n";
         }
         $body = [];
         $code = [];
@@ -934,7 +934,7 @@ The following list contains all public classes in namespace :php:`%s`.
 
         $header = sprintf('.. php:const:: %s', RstHelper::escapeRst($constant)) . "\n\n";
         if ($noindexInClassMembers) {
-            $header = '   :noindex';
+            $header .= '   :noindex:' . "\n\n";
         }
         $body = [];
         $body[] = sprintf(':php:`%s`, type %s', var_export($constantReflection, true), gettype($constantReflection)) . "\n\n";
