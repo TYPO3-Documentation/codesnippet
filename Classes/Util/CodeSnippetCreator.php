@@ -30,8 +30,8 @@ use T3docs\Codesnippet\Exceptions\InvalidConfigurationException;
 
 class CodeSnippetCreator
 {
-    const RECURSIVE_PATH = 1;
-    const FLAT_PATH = 1;
+    public const RECURSIVE_PATH = 1;
+    public const FLAT_PATH = 1;
 
     private static $fileCount = 0;
     private static $configPath = '';
@@ -87,7 +87,7 @@ class CodeSnippetCreator
         mkdir(dirname($filename), 0755, true);
         \TYPO3\CMS\Core\Utility\GeneralUtility::writeFile(
             $filename,
-            $content
+            $content,
         );
     }
 
@@ -107,7 +107,7 @@ class CodeSnippetCreator
         $content = preg_replace("/\n\s+\n/", "\n\n", $content);
         \TYPO3\CMS\Core\Utility\GeneralUtility::writeFile(
             $filename,
-            $content
+            $content,
         );
 
         if ($rstContent && $entry['rstFileName']) {
@@ -115,7 +115,7 @@ class CodeSnippetCreator
             mkdir(dirname($rstFilename), 0755, true);
             \TYPO3\CMS\Core\Utility\GeneralUtility::writeFile(
                 $filename,
-                $content
+                $content,
             );
             if ($overwriteRst || !file_exists($rstFilename)) {
                 \TYPO3\CMS\Core\Utility\GeneralUtility::writeFile($rstFilename, $rstContent);

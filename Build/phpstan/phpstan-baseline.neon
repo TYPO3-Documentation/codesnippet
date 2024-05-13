@@ -1,0 +1,46 @@
+parameters:
+	ignoreErrors:
+		-
+			message: "#^Call to sprintf contains 0 placeholders, 1 value given\\.$#"
+			count: 1
+			path: ../../Classes/Util/ClassDocsHelper.php
+
+		-
+			message: "#^Call to static method getClassesInNamespace\\(\\) on an unknown class HaydenPierce\\\\ClassFinder\\\\ClassFinder\\.$#"
+			count: 1
+			path: ../../Classes/Util/ClassDocsHelper.php
+
+		-
+			message: "#^Class T3docs\\\\Codesnippet\\\\Util\\\\Null_ not found\\.$#"
+			count: 17
+			path: ../../Classes/Util/ClassDocsHelper.php
+
+		-
+			message: "#^Static method T3docs\\\\Codesnippet\\\\Util\\\\ArrayHelper\\:\\:varExportArrayShort\\(\\) invoked with 2 parameters, 1 required\\.$#"
+			count: 1
+			path: ../../Classes/Util/ClassDocsHelper.php
+
+		-
+			message: "#^Variable \\$description might not be defined\\.$#"
+			count: 1
+			path: ../../Classes/Util/ClassDocsHelper.php
+
+		-
+			message: "#^Variable \\$paramName might not be defined\\.$#"
+			count: 1
+			path: ../../Classes/Util/ClassDocsHelper.php
+
+		-
+			message: "#^Variable \\$shortClass might not be defined\\.$#"
+			count: 1
+			path: ../../Classes/Util/ClassDocsHelper.php
+
+		-
+			message: "#^Variable \\$type might not be defined\\.$#"
+			count: 1
+			path: ../../Classes/Util/ClassDocsHelper.php
+
+		-
+			message: "#^Call to an undefined static method T3docs\\\\Codesnippet\\\\Util\\\\ClassDocsHelper\\:\\:extractDocsFromClass\\(\\)\\.$#"
+			count: 1
+			path: ../../Classes/Util/Typo3CodeSnippets.php

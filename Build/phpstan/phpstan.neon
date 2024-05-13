@@ -1,0 +1,22 @@
+includes:
+	- phpstan-baseline.neon
+parameters:
+  phpVersion: 80100
+  level: 1
+
+  bootstrapFiles:
+    - phpstan-typo3-constants.php
+
+  paths:
+    - ../../Classes/
+    - ../../Configuration/
+
+  inferPrivatePropertyTypeFromConstructor: true
+  treatPhpDocTypesAsCertain: false
+
+  tmpDir: ../.Build/.cache/phpstan/
+
+  excludePaths:
+    - '*/Build/node_modules'
+    - '../../ext_emconf.php'
+

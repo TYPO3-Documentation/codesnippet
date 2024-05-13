@@ -28,7 +28,7 @@ class TestClass1
 
     public function createMyFirstObject(
         array $options,
-        int $limit = 0
+        int $limit = 0,
     ): MyFirstClass {
         return new MyFirstClass();
     }

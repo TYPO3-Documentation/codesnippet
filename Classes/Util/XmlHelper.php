@@ -93,9 +93,9 @@ class XmlHelper
                         self::stopCollectingXmlErrors();
                         throw new \Exception(
                             self::printError(
-                                sprintf('XPath "%s" does not match any XML nodes.', $xPath)
+                                sprintf('XPath "%s" does not match any XML nodes.', $xPath),
                             ),
-                            4003
+                            4003,
                         );
                     }
                 } else {

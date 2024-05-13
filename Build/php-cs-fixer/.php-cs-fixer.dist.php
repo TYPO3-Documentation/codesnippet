@@ -1,6 +1,22 @@
 <?php
 
 $config = \TYPO3\CodingStandards\CsFixerConfig::create();
+$rules = $config->getRules();
+unset(
+    $rules['@PER'],
+    $rules['function_typehint_space'],
+    $rules['curly_braces_position'],
+);
+$config->setRules($rules);
+$config->addRules([
+  '@PER-CS' => true,
+   'type_declaration_spaces' => [
+        'elements' => [
+            'function',
+            'property',
+        ],
+   ],
+]);
 $config
     ->getFinder()
     ->in(__DIR__)

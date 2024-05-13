@@ -78,7 +78,7 @@ class JsonHelper
         &$jsonEntry,
         int $inlineLevel,
         array &$inlineJsons,
-        array $keys = []
+        array $keys = [],
     ): void {
         if (!is_array($jsonEntry)) {
             return;
@@ -88,9 +88,9 @@ class JsonHelper
             foreach ($jsonEntry as $key => &$child) {
                 self::grabInlineJsonsAndReplaceWithPlaceholders(
                     $child,
-                    $inlineLevel-1,
+                    $inlineLevel - 1,
                     $inlineJsons,
-                    array_merge($keys, [$key])
+                    array_merge($keys, [$key]),
                 );
             }
         } else {

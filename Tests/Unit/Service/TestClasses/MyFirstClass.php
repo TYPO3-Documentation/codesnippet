@@ -17,7 +17,5 @@ namespace T3docs\Codesnippet\Tests\Unit\Service\TestClasses;
 
 class MyFirstClass
 {
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 }
