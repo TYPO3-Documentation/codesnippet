@@ -718,11 +718,11 @@ The following list contains all public classes in namespace :php:`%s`.
                 $param['type'] = 'mixed';
             }
             if ($param['default']) {
-                $parameterInSignature[] = sprintf('%s %s = %s', RstHelper::escapeRst($param['type']), $param['name'], $param['default']);
-                $parameterInRst[] = sprintf(':param %s %s: %s, default: %s', RstHelper::escapeRst($param['type']), $param['name'], $param['description'], $param['default']);
+                $parameterInSignature[] = sprintf('%s %s = %s', $param['type'], $param['name'], $param['default']);
+                $parameterInRst[] = sprintf(':param %s %s: %s, default: %s', $param['type'], $param['name'], $param['description'], $param['default']);
             } else {
-                $parameterInSignature[] = sprintf('%s %s', RstHelper::escapeRst($param['type']), $param['name']);
-                $parameterInRst[] = sprintf(':param %s %s: %s', RstHelper::escapeRst($param['type']), $param['name'], $param['description']);
+                $parameterInSignature[] = sprintf('%s %s', $param['type'], $param['name']);
+                $parameterInRst[] = sprintf(':param %s %s: %s', $param['type'], $param['name'], $param['description']);
             }
         }
         $codeResult = [];
@@ -781,7 +781,7 @@ The following list contains all public classes in namespace :php:`%s`.
             }
         }
 
-        $methodHead = sprintf('..  php:method:: %s(%s)', $methodName, implode(', ', $parameterInSignature)) . ': ' . $typeNames . "\n";
+        $methodHead = sprintf('..  php:method:: %s(%s)', $methodName, implode(', ', $parameterInSignature)) . "\n";
         if ($noindexInClassMembers) {
             $methodHead .= '    :noindex:' . "\n";
         }
