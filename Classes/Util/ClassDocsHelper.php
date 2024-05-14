@@ -108,13 +108,13 @@ class ClassDocsHelper
                 'withCode' => false,
             ];
             $rstContent = sprintf(
-                '.. include:: /Includes.rst.txt
+                '..  include:: /Includes.rst.txt
 
 ================================================================================
 %s
 ================================================================================
 
-.. include:: /CodeSnippets/%s.rst.txt
+..  include:: /CodeSnippets/%s.rst.txt
 ',
                 RstHelper::escapeRst($shortClass),
                 $outputPath,
@@ -173,14 +173,14 @@ class ClassDocsHelper
             }
             $tree = '';
             if ($addedNameSpaceConfig['hasSubDirs']) {
-                $tree .= '   */Index' . LF;
+                $tree .= '    */Index' . LF;
             }
             if ($addedNameSpaceConfig['hasChildren']) {
-                $tree .= '   *' . LF;
+                $tree .= '    *' . LF;
             }
             $indexContent = sprintf(
                 '
-.. include:: /Includes.rst.txt
+..  include:: /Includes.rst.txt
 
 ================================================================================
 %s
@@ -189,7 +189,7 @@ class ClassDocsHelper
 
 The following list contains all public classes in namespace :php:`%s`.
 
-.. toctree::
+..  toctree::
    :titlesonly:
    :maxdepth: 1
    :caption: %s
@@ -242,19 +242,19 @@ The following list contains all public classes in namespace :php:`%s`.
      * Output:
      *
      *
-     * .. php:namespace:: Vendor\Extension\MyNamespace\
+     * ..  php:namespace:: Vendor\Extension\MyNamespace\
      *
-     * .. php:class:: MyClass
+     * ..  php:class:: MyClass
      *
-     *    .. php:const:: MY_CONSTANT
+     *    ..  php:const:: MY_CONSTANT
      *
      *         MY_CONSTANT
      *
-     *    .. php:attr:: myVariable
+     *    ..  php:attr:: myVariable
      *
      *            *  Value of some attribute
      *
-     *    .. php:method:: createMyFirstObject(string $column, string $columnName = '')
+     *    ..  php:method:: createMyFirstObject(string $column, string $columnName = '')
      *
      *         Add a new column or override an existing one. Latter is only possible,
      *         in case $columnName is given. Otherwise, the column will be added with
@@ -385,7 +385,7 @@ The following list contains all public classes in namespace :php:`%s`.
         $classBody .= isset($result['properties']) ? implode("\n", array_filter($result['properties'])) . "\n" : '';
         $classBody .= isset($result['methods']) ? implode("\n", array_filter($result['methods'])) . "\n" : '';
         $classBody = rtrim($classBody);
-        $classBody = StringHelper::indentMultilineText($classBody, '   ') . "\n";
+        $classBody = StringHelper::indentMultilineText($classBody, '    ') . "\n";
 
         $classSignature = self::getClassSignature($class, $withCode, $classReflection, $gitHubLink, $includeClassComment, $noindexInClass);
 
@@ -478,7 +478,7 @@ The following list contains all public classes in namespace :php:`%s`.
      *      }
      * }
      *
-     *  .. php:class:: MyClass
+     *  ..  php:class:: MyClass
      *
      *     Some DocComment
      *
@@ -523,22 +523,22 @@ The following list contains all public classes in namespace :php:`%s`.
         $classShortName = $classReflection->getShortName();
 
         $result = [];
-        $result[] = sprintf('.. php:namespace::  %s', $namespace);
+        $result[] = sprintf('..  php:namespace::  %s', $namespace);
         $result[] = "\n\n";
         if ($reflectionClass->isInterface()) {
-            $result[] = sprintf('.. php:interface:: %s', $classShortName);
+            $result[] = sprintf('..  php:interface:: %s', $classShortName);
         } else {
-            $result[] = sprintf('.. php:class:: %s', $classShortName);
+            $result[] = sprintf('..  php:class:: %s', $classShortName);
         }
         if ($noindexInClass) {
-            $result[] = "\n" . '   :noindex:';
+            $result[] = "\n" . '    :noindex:';
         }
         if ($reflectionClass->isAbstract() && !$reflectionClass->isInterface()) {
-            $result[] = "\n" . '   :abstract:';
+            $result[] = "\n" . '    :abstract:';
         }
         $result[] = "\n\n";
         if ($comment) {
-            $result[] = StringHelper::indentMultilineText($comment, '   ') . "\n\n";
+            $result[] = StringHelper::indentMultilineText($comment, '    ') . "\n\n";
         }
 
         // SplFileObject locks the file, so null it when no longer needed
@@ -734,12 +734,6 @@ The following list contains all public classes in namespace :php:`%s`.
         }
         $code = implode('', $codeResult);
 
-        $methodHead = sprintf('.. php:method:: %s(%s)', $methodName, implode(', ', $parameterInSignature)) . "\n";
-        if ($noindexInClassMembers) {
-            $methodHead .= '   :noindex:' . "\n";
-        }
-        $methodHead .=  "\n";
-
         $result = [];
         if ($gitHubLink) {
             $comment .= "\n\n";
@@ -760,9 +754,9 @@ The following list contains all public classes in namespace :php:`%s`.
             $result[] = "\n\n";
         }
         if ($code) {
-            $result[] = '.. code-block:: php';
+            $result[] = '..  code-block:: php';
             $result[] = "\n\n";
-            $result[] = StringHelper::indentMultilineText($code, '   ');
+            $result[] = StringHelper::indentMultilineText($code, '    ');
             $result[] = "\n\n";
         }
         if ($parameterInRst) {
@@ -780,14 +774,21 @@ The following list contains all public classes in namespace :php:`%s`.
                 }
                 $typeNames = implode('|', $typeNameArray);
             }
-            $returnPart = sprintf(':returntype: `%s`', $typeNames);
             if ($returnComment) {
-                $returnPart .= "\n" . sprintf(':returns: %s', $returnComment);
+                $returnPart = sprintf('    :returns: %s', $returnComment);
+            } else {
+                $returnPart = sprintf('    :returns: %s', $typeNames);
             }
-            $result[] = $returnPart . "\n";
         }
 
-        $methodBody = StringHelper::indentMultilineText(implode('', $result), '   ');
+        $methodHead = sprintf('..  php:method:: %s(%s)', $methodName, implode(', ', $parameterInSignature)) . ': ' . $typeNames . "\n";
+        if ($noindexInClassMembers) {
+            $methodHead .= '    :noindex:' . "\n";
+        }
+        $methodHead .= $returnPart . "\n";
+        $methodHead .=  "\n";
+
+        $methodBody = StringHelper::indentMultilineText(implode('', $result), '    ');
 
         // SplFileObject locks the file, so null it when no longer needed
         $splFileObject = null;
@@ -870,9 +871,9 @@ The following list contains all public classes in namespace :php:`%s`.
             }
         }
 
-        $header = sprintf('.. php:attr:: %s', RstHelper::escapeRst($property)) . "\n";
+        $header = sprintf('..  php:attr:: %s', RstHelper::escapeRst($property)) . "\n";
         if ($noindexInClassMembers) {
-            $header .= '   :noindex:' . "\n";
+            $header .= '    :noindex:' . "\n";
         }
         $header .=  "\n";
         $body = [];
@@ -890,14 +891,14 @@ The following list contains all public classes in namespace :php:`%s`.
         if ($code) {
             $code = implode('', $code);
             if ($withCode) {
-                $body[] = '.. code-block:: php' . "\n\n";
-                $body[] = StringHelper::indentMultilineText($code, '   ');
+                $body[] = '..  code-block:: php' . "\n\n";
+                $body[] = StringHelper::indentMultilineText($code, '    ');
             }
         }
 
         // SplFileObject locks the file, so null it when no longer needed
         $splFileObject = null;
-        return $header . StringHelper::indentMultilineText(implode('', $body), '   ');
+        return $header . StringHelper::indentMultilineText(implode('', $body), '    ');
     }
 
     /**
@@ -933,9 +934,9 @@ The following list contains all public classes in namespace :php:`%s`.
         }
         $splFileObject = new \SplFileObject($classReflection->getFileName());
 
-        $header = sprintf('.. php:const:: %s', RstHelper::escapeRst($constant)) . "\n";
+        $header = sprintf('..  php:const:: %s', RstHelper::escapeRst($constant)) . "\n";
         if ($noindexInClassMembers) {
-            $header .= '   :noindex:' . "\n";
+            $header .= '    :noindex:' . "\n";
         }
         $header .=  "\n";
         $body = [];
@@ -961,13 +962,13 @@ The following list contains all public classes in namespace :php:`%s`.
                 return '';
             }
             if ($withCode) {
-                $body[] = '.. code-block:: php' . "\n";
-                $body[] = StringHelper::indentMultilineText($code, '   ');
+                $body[] = '..  code-block:: php' . "\n";
+                $body[] = StringHelper::indentMultilineText($code, '    ');
             }
         }
 
         // SplFileObject locks the file, so null it when no longer needed
         $splFileObject = null;
-        return $header . StringHelper::indentMultilineText(implode('', $body), '   ');
+        return $header . StringHelper::indentMultilineText(implode('', $body), '    ');
     }
 }
