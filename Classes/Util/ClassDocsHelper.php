@@ -278,7 +278,7 @@ The following list contains all public classes in namespace :php:`%s`.
         $allowDeprecated = $config['allowDeprecated'] ?? false;
         $includeClassComment = $config['includeClassComment'] ?? true;
         $includeMemberComment = $config['includeMemberComment'] ?? true;
-        $includeMethodParameters = $config['includeMemberComment'] ?? true;
+        $includeMethodParameters = $config['includeMethodParameters'] ?? true;
         $includeConstructor = $config['includeConstructor'] ?? false;
         $noindexInClass = $config['noindexInClass'] ?? false;
         $noindexInClassMembers = $config['noindexInClassMembers'] ?? false;
@@ -785,7 +785,7 @@ The following list contains all public classes in namespace :php:`%s`.
                 );
             }
         }
-        if ($comment) {
+        if ($comment && $includeMemberComment) {
             $result[] = $comment;
             $result[] = "\n\n";
         }
@@ -795,7 +795,7 @@ The following list contains all public classes in namespace :php:`%s`.
             $result[] = StringHelper::indentMultilineText($code, '    ');
             $result[] = "\n\n";
         }
-        if ($parameterInRst) {
+        if ($includeMethodParameters && $parameterInRst) {
             $result[] = implode("\n", $parameterInRst) . "\n";
         }
         if ($returnType instanceof \ReflectionUnionType or $returnType instanceof \ReflectionNamedType && $returnType->getName() != 'void') {
@@ -821,7 +821,9 @@ The following list contains all public classes in namespace :php:`%s`.
         if ($noindexInClassMembers) {
             $methodHead .= '    :noindex:' . "\n";
         }
-        $methodHead .= $returnPart . "\n";
+        if ($includeMethodParameters) {
+            $methodHead .= $returnPart . "\n";
+        }
         $methodHead .=  "\n";
 
         $methodBody = StringHelper::indentMultilineText(implode('', $result), '    ');
@@ -881,6 +883,7 @@ The following list contains all public classes in namespace :php:`%s`.
         bool $withCode,
         int $modifierSum,
         bool $noindexInClassMembers,
+        bool $includeMemberComment,
     ): string {
         $classReflection = self::getClassReflection($class);
         $propertyReflection = $classReflection->getProperty($property);
@@ -934,7 +937,10 @@ The following list contains all public classes in namespace :php:`%s`.
 
         // SplFileObject locks the file, so null it when no longer needed
         $splFileObject = null;
-        return $header . StringHelper::indentMultilineText(implode('', $body), '    ');
+        if ($includeMemberComment) {
+            return $header . StringHelper::indentMultilineText(implode('', $body), '    ');
+        }
+        return $header;
     }
 
     /**
@@ -961,6 +967,7 @@ The following list contains all public classes in namespace :php:`%s`.
         bool $withCode,
         int $modifierSum,
         bool $noindexInClassMembers,
+        bool $includeMemberComment,
     ): string {
         $classReflection = self::getClassReflection($class);
         $constantReflection = $classReflection->getConstant($constant);
@@ -1005,6 +1012,9 @@ The following list contains all public classes in namespace :php:`%s`.
 
         // SplFileObject locks the file, so null it when no longer needed
         $splFileObject = null;
-        return $header . StringHelper::indentMultilineText(implode('', $body), '    ');
+        if ($includeMemberComment) {
+            return $header . StringHelper::indentMultilineText(implode('', $body), '    ');
+        }
+        return $header;
     }
 }

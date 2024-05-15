@@ -16,16 +16,6 @@ parameters:
 			path: ../../Classes/Util/ClassDocsHelper.php
 
 		-
-			message: "#^Static method T3docs\\\\Codesnippet\\\\Util\\\\ClassDocsHelper\\:\\:getConstantCode\\(\\) invoked with 6 parameters, 5 required\\.$#"
-			count: 2
-			path: ../../Classes/Util/ClassDocsHelper.php
-
-		-
-			message: "#^Static method T3docs\\\\Codesnippet\\\\Util\\\\ClassDocsHelper\\:\\:getPropertyCode\\(\\) invoked with 6 parameters, 5 required\\.$#"
-			count: 2
-			path: ../../Classes/Util/ClassDocsHelper.php
-
-		-
 			message: "#^Variable \\$description might not be defined\\.$#"
 			count: 1
 			path: ../../Classes/Util/ClassDocsHelper.php
