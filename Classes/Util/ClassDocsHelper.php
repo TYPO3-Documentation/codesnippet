@@ -277,6 +277,8 @@ The following list contains all public classes in namespace :php:`%s`.
         $allowInternal = $config['allowInternal'] ?? false;
         $allowDeprecated = $config['allowDeprecated'] ?? false;
         $includeClassComment = $config['includeClassComment'] ?? true;
+        $includeMemberComment = $config['includeMemberComment'] ?? true;
+        $includeMethodParameters = $config['includeMemberComment'] ?? true;
         $includeConstructor = $config['includeConstructor'] ?? false;
         $noindexInClass = $config['noindexInClass'] ?? false;
         $noindexInClassMembers = $config['noindexInClassMembers'] ?? false;
@@ -326,6 +328,8 @@ The following list contains all public classes in namespace :php:`%s`.
                         $includeConstructor,
                         $gitHubLink,
                         $noindexInClassMembers,
+                        $includeMemberComment,
+                        $includeMethodParameters,
                     );
                 } elseif ($classReflection->hasProperty($member)) {
                     $result['properties'][] = self::getPropertyCode(
@@ -334,6 +338,7 @@ The following list contains all public classes in namespace :php:`%s`.
                         $withCode,
                         $modifierSum,
                         $noindexInClassMembers,
+                        $includeMemberComment,
                     );
                 } elseif ($classReflection->hasConstant($member)) {
                     $result['constants'][] = self::getConstantCode(
@@ -342,6 +347,7 @@ The following list contains all public classes in namespace :php:`%s`.
                         $withCode,
                         $modifierSum,
                         $noindexInClassMembers,
+                        $includeMemberComment,
                     );
                 } else {
                     throw new \ReflectionException(
@@ -365,6 +371,8 @@ The following list contains all public classes in namespace :php:`%s`.
                     $includeConstructor,
                     $gitHubLink,
                     $noindexInClassMembers,
+                    $includeMemberComment,
+                    $includeMethodParameters,
                 );
             }
             foreach ($classReflection->getProperties() as $property) {
@@ -374,10 +382,18 @@ The following list contains all public classes in namespace :php:`%s`.
                     $withCode,
                     $modifierSum,
                     $noindexInClassMembers,
+                    $includeMemberComment,
                 );
             }
             foreach ($classReflection->getConstants() as $constant => $constantValue) {
-                $result['constants'][] = self::getConstantCode($class, $constant, $withCode, $modifierSum, $noindexInClassMembers);
+                $result['constants'][] = self::getConstantCode(
+                    $class,
+                    $constant,
+                    $withCode,
+                    $modifierSum,
+                    $noindexInClassMembers,
+                    $includeMemberComment,
+                );
             }
         }
 
@@ -594,8 +610,10 @@ The following list contains all public classes in namespace :php:`%s`.
         bool $allowInternal,
         bool $allowDeprecated,
         bool $includeConstructor,
-        string $gitHubLink = '',
-        bool $noindexInClassMembers = false,
+        string $gitHubLink,
+        bool $noindexInClassMembers,
+        bool $includeMemberComment,
+        bool $includeMethodParameters,
     ): string {
         $methodReflection = self::getMethodReflection($class, $method);
         $isInternal = is_string($methodReflection->getDocComment())
@@ -644,7 +662,16 @@ The following list contains all public classes in namespace :php:`%s`.
                     $typeNameArray[] = $type->getName();
                 }
                 $type = implode('|', $typeNameArray);
+            } elseif ($parameter->getType() instanceof \ReflectionIntersectionType) {
+                $types = $parameter->getType()->getTypes();
+                $typeNameArray = [];
+                foreach ($types as $typeElement) {
+                    $typeNameArray[] = $typeElement->getName();
+                }
+                $type = implode('&', $typeNameArray);
             }
+            // Check if the parameter allows null
+            $nullable = $parameter->allowsNull() ? '?' : '';
             $optional = $parameter->isOptional();
             $default = '';
             if ($optional) {
@@ -653,12 +680,21 @@ The following list contains all public classes in namespace :php:`%s`.
                 } catch (\ReflectionException $e) {
                 }
             }
+            // Check if the parameter is passed by reference
+            $passedByReference = $parameter->isPassedByReference() ? '&' : '';
+
+            // Check if the parameter is variadic
+            $variadic = $parameter->isVariadic() ? '...' : '';
+
             $parameterResolved[] = [
                 'name' =>  '$' . $paramName,
                 'type' => $type,
                 'optional' => $optional,
                 'default' => $default,
                 'description' => '',
+                'passedByReference' => $passedByReference,
+                'variadic' => $variadic,
+                'nullable' => $nullable,
             ];
         }
         $docComment = $methodReflection->getDocComment();
@@ -691,7 +727,7 @@ The following list contains all public classes in namespace :php:`%s`.
                             $type = $paramCommentExplode[1];
                             $description = $paramCommentExplode[3] ?? '';
                         }
-                        foreach ($parameterResolved as $key => $param) {
+                        foreach ($parameterResolved as $key => $paramResolved) {
                             if ($parameterResolved[$key]['name'] === $paramName) {
                                 // Type from method reflection is considered more accurate
                                 if (!$parameterResolved[$key]['type']) {
@@ -718,11 +754,11 @@ The following list contains all public classes in namespace :php:`%s`.
                 $param['type'] = 'mixed';
             }
             if ($param['default']) {
-                $parameterInSignature[] = sprintf('%s %s = %s', $param['type'], $param['name'], $param['default']);
-                $parameterInRst[] = sprintf(':param %s %s: %s, default: %s', $param['type'], $param['name'], $param['description'], $param['default']);
+                $parameterInSignature[] = sprintf('%s%s %s%s%s = %s', $param['nullable'], $param['type'], $param['variadic'], $param['passedByReference'], $param['name'], $param['default']);
+                $parameterInRst[] = sprintf(':param %s: %s, default: %s', $param['name'], $param['description'], $param['default']);
             } else {
-                $parameterInSignature[] = sprintf('%s %s', $param['type'], $param['name']);
-                $parameterInRst[] = sprintf(':param %s %s: %s', $param['type'], $param['name'], $param['description']);
+                $parameterInSignature[] = sprintf('%s%s %s%s%s', $param['nullable'], $param['type'], $param['variadic'], $param['passedByReference'], $param['name']);
+                $parameterInRst[] = sprintf(':param %s: %s', $param['name'], $param['description']);
             }
         }
         $codeResult = [];
@@ -765,12 +801,12 @@ The following list contains all public classes in namespace :php:`%s`.
         if ($returnType instanceof \ReflectionUnionType or $returnType instanceof \ReflectionNamedType && $returnType->getName() != 'void') {
             $typeNames = '';
             if ($returnType instanceof \ReflectionNamedType) {
-                $typeNames = $returnType->getName();
+                $typeNames = $returnType->allowsNull() ? '?' . $returnType->getName() : $returnType->getName();
             } elseif ($returnType instanceof \ReflectionUnionType) {
                 $types = $returnType->getTypes();
                 $typeNameArray = [];
                 foreach ($types as $type) {
-                    $typeNameArray[] = $type->getName();
+                    $typeNameArray[] = $type->allowsNull() ? '?' . $type->getName() : $type->getName();
                 }
                 $typeNames = implode('|', $typeNameArray);
             }
