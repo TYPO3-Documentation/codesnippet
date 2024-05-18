@@ -795,9 +795,12 @@ The following list contains all public classes in namespace :php:`%s`.
             $result[] = StringHelper::indentMultilineText($code, '    ');
             $result[] = "\n\n";
         }
+
         if ($includeMethodParameters && $parameterInRst) {
             $result[] = implode("\n", $parameterInRst) . "\n";
         }
+
+        $returnPart = '';
         if ($returnType instanceof \ReflectionUnionType or $returnType instanceof \ReflectionNamedType && $returnType->getName() != 'void') {
             $typeNames = '';
             if ($returnType instanceof \ReflectionNamedType) {
@@ -821,6 +824,7 @@ The following list contains all public classes in namespace :php:`%s`.
         if ($noindexInClassMembers) {
             $methodHead .= '    :noindex:' . "\n";
         }
+
         if ($includeMethodParameters) {
             $methodHead .= $returnPart . "\n";
         }
