@@ -752,6 +752,8 @@ The following list contains all public classes in namespace :php:`%s`.
             }
             if (!$param['type']) {
                 $param['type'] = 'mixed';
+            } else {
+                $param['type'] = self::getFullQualifiedClassNameIfPossible($param['type']);
             }
             if ($param['default']) {
                 $parameterInSignature[] = sprintf('%s%s %s%s%s = %s', $param['nullable'], $param['type'], $param['variadic'], $param['passedByReference'], $param['name'], $param['default']);
@@ -804,12 +806,16 @@ The following list contains all public classes in namespace :php:`%s`.
         if ($returnType instanceof \ReflectionUnionType or $returnType instanceof \ReflectionNamedType && $returnType->getName() != 'void') {
             $typeNames = '';
             if ($returnType instanceof \ReflectionNamedType) {
-                $typeNames = $returnType->allowsNull() ? '?' . $returnType->getName() : $returnType->getName();
+                $typeNames = $returnType->allowsNull()
+                    ? '?' . self::getFullQualifiedClassNameIfPossible($returnType->getName())
+                    : self::getFullQualifiedClassNameIfPossible($returnType->getName());
             } elseif ($returnType instanceof \ReflectionUnionType) {
                 $types = $returnType->getTypes();
                 $typeNameArray = [];
                 foreach ($types as $type) {
-                    $typeNameArray[] = $type->allowsNull() ? '?' . $type->getName() : $type->getName();
+                    $typeNameArray[] = $type->allowsNull()
+                        ? '?' . self::getFullQualifiedClassNameIfPossible($type->getName())
+                        : self::getFullQualifiedClassNameIfPossible($type->getName());
                 }
                 $typeNames = implode('|', $typeNameArray);
             }
@@ -1020,5 +1026,17 @@ The following list contains all public classes in namespace :php:`%s`.
             return $header . StringHelper::indentMultilineText(implode('', $body), '    ');
         }
         return $header;
+    }
+
+    private static function getFullQualifiedClassNameIfPossible(string $className): string
+    {
+        try {
+            $reflectionClass = new \ReflectionClass($className);
+            $className = '\\' . $reflectionClass->getName();
+        } catch (\Exception | \Throwable $e) {
+            // It's a scalar type, array or non-object
+        }
+
+        return $className;
     }
 }
