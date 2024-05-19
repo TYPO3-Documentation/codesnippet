@@ -21,7 +21,6 @@ $EM_CONF[$_EXTKEY] = [
     'author_email' => 'documentation@typo3.org',
     'state' => 'stable',
     'uploadfolder' => 0,
-    'createDirs' => '',
     'author_company' => '',
     'version' => '12.0.0',
     'constraints' => [
