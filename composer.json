@@ -1,6 +1,6 @@
 {
 	"name": "t3docs/codesnippet",
-	"description": "This extension packages creates restructured files to document the API",
+	"description": "This TYPO3 extension creates restructured files to document the API",
 	"license": [
 		"GPL-2.0-or-later"
 	],
