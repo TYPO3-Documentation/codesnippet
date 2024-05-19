@@ -15,7 +15,7 @@
 
 $EM_CONF[$_EXTKEY] = [
     'title' => 'Restructured API tools',
-    'description' => 'This extension packages creates restructured files to document the API',
+    'description' => 'This TYPO3 extension creates restructured files to document the API',
     'category' => 'distribution',
     'author' => 'Documentation Team',
     'author_email' => 'documentation@typo3.org',
