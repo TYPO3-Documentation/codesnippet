@@ -22,6 +22,12 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use T3docs\Codesnippet\Util\CodeSnippetCreator;
 
+/**
+ * This command will parse the given codesnippet.php file with all its sub-configurations
+ * to build restructured text interpretations of the configured files.
+ * The command is called PhpDomain, because it will convert short classnames
+ * to their FQCN.
+ */
 class PhpDomainCommand extends Command
 {
     /**
@@ -29,14 +35,13 @@ class PhpDomainCommand extends Command
      */
     protected function configure()
     {
-        $this->setHelp('Prints a list of recent sys_log entries.'
-            . LF . 'If you want to get more detailed information, use the --verbose option.')
-            ->setDescription('Run content importer. Without '
-                . ' arguments all available wizards will be run.')
+        $this->setHelp('This command will loop through all configured files in codesnippet.php '
+            . LF . 'and creates a restructured interpretation of the configured file.')
+            ->setDescription('Command to create a restructured text interpretation of PHP files.')
             ->addArgument(
                 'config',
-                InputArgument::OPTIONAL,
-                'Enter the fully qualified name of the structure you want to export',
+                InputArgument::REQUIRED,
+                'Enter the path to the directory which contains the codesnippet.php file',
             );
     }
 
