@@ -1,4 +1,11 @@
 services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  T3docs\Codesnippet\:
+    resource: '../Classes/*'
 
   T3docs\Codesnippet\Command\PhpDomainCommand:
     tags:
