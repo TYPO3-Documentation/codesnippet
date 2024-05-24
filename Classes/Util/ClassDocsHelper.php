@@ -820,9 +820,9 @@ The following list contains all public classes in namespace :php:`%s`.
                 $typeNames = implode('|', $typeNameArray);
             }
             if ($returnComment) {
-                $returnPart = sprintf('    :returns: %s', $returnComment);
+                $returnPart = sprintf('    :returns: `%s`', $returnComment);
             } else {
-                $returnPart = sprintf('    :returns: %s', $typeNames);
+                $returnPart = sprintf('    :returns: `%s`', $typeNames);
             }
         }
 
