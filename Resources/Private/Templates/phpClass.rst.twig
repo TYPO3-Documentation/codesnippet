@@ -1,0 +1,17 @@
+{% if namespace -%}
+..  php:namespace::  {{ namespace }}
+{% endif %}
+
+..  php:{{ type }}:: {{ classSignature }}
+{% if noindexInClass %}
+    :noindex:
+{% endif %}
+{% for modifier in modifiers %}
+    :{{ modifier }}:
+{% endfor %}
+
+{% if classComment -%}
+    {{ classComment }}
+{% endif %}
+
+{{ classBody }}
