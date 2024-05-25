@@ -435,7 +435,7 @@ The following list contains all public classes in namespace :php:`%s`.
         ]);
 
         // Variables to pass to the template
-        $data = [
+        $context = [
             'namespace' => $classReflection->getNamespaceName(),
             'classSignature' => $classReflection->getShortName(),
             'modifiers' => $modifiers,
@@ -446,7 +446,7 @@ The following list contains all public classes in namespace :php:`%s`.
         ];
 
         // Render the template
-        return $twig->render('phpClass.rst.twig', $data);
+        return $twig->render('phpClass.rst.twig', $context);
     }
 
     protected static function getClassReflection(string $class): \ReflectionClass
