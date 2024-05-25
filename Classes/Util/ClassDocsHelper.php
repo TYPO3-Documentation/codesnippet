@@ -31,6 +31,8 @@ use phpDocumentor\Reflection\DocBlockFactory;
 use T3docs\Codesnippet\Exceptions\ClassNotPublicException;
 use T3docs\Codesnippet\Exceptions\InvalidConfigurationException;
 use T3docs\Codesnippet\Utility\PhpDocToRstUtility;
+use Twig\Environment;
+use Twig\Loader\FilesystemLoader;
 
 class ClassDocsHelper
 {
@@ -401,10 +403,19 @@ The following list contains all public classes in namespace :php:`%s`.
         $classBody .= isset($result['properties']) ? implode("\n", array_filter($result['properties'])) . "\n" : '';
         $classBody .= isset($result['methods']) ? implode("\n", array_filter($result['methods'])) . "\n" : '';
         $classBody = rtrim($classBody);
-        $classBody = StringHelper::indentMultilineText($classBody, '    ') . "\n";
+        $classBody = StringHelper::indentMultilineText($classBody, '    ');
 
-        $classSignature = self::getClassSignature($class, $withCode, $classReflection, $gitHubLink, $includeClassComment, $noindexInClass);
+        $modifiers = [];
+        if ($classReflection->isAbstract() && !$classReflection->isInterface()) {
+            $modifiers[] = 'abstract';
+        }
 
+        $type = 'class';
+        if ($classReflection->isInterface()) {
+            $type = 'interface';
+        }
+
+        /*
         if (!$template) {
             $content = $classSignature . $classBody;
         } else {
@@ -414,7 +425,28 @@ The following list contains all public classes in namespace :php:`%s`.
                 $classSignature . $classBody,
             );
         }
-        return $content;
+        */
+
+        $loader = new FilesystemLoader(__DIR__ . '/../../Resources/Private/Templates/');
+        $twig = new Environment($loader, [
+            'cache' => 'path/to/compilation_cache',
+            'debug' => true,
+            'autoescape' => false, // Disable autoescaping, we generate reStructuredText, not HTML
+        ]);
+
+        // Variables to pass to the template
+        $data = [
+            'namespace' => $classReflection->getNamespaceName(),
+            'classSignature' => $classReflection->getShortName(),
+            'modifiers' => $modifiers,
+            'classComment' => self::getClassComment($classReflection, $gitHubLink, $includeClassComment),
+            'noindexInClass' => $noindexInClass,
+            'classBody' => $classBody,
+            'type' => $type,
+        ];
+
+        // Render the template
+        return $twig->render('phpClass.rst.twig', $data);
     }
 
     protected static function getClassReflection(string $class): \ReflectionClass
@@ -479,44 +511,12 @@ The following list contains all public classes in namespace :php:`%s`.
         return $alias;
     }
 
-    /**
-     * Extract signature of class, e.g.
-     *
-     * Input:
-     * /**
-     * * Some DocComment
-     *
-     * class MyClass
-     * {
-     *      public function myMethod(): string
-     *      {
-     *          return 'I am the method code';
-     *      }
-     * }
-     *
-     *  ..  php:class:: MyClass
-     *
-     *     Some DocComment
-     *
-     * @param string $class Class name, e.g. "TYPO3\CMS\Core\Cache\Backend\FileBackend"
-     * @param bool $withCode Include code
-     * @return string
-     */
-    public static function getClassSignature(
-        string $class,
-        bool $withCode,
-        \ReflectionClass $reflectionClass,
+    public static function getClassComment(
+        \ReflectionClass $classReflection,
         $gitHubLink = '',
         $includeClassComment = true,
-        $noindexInClass = false,
     ): string {
-        $classReflection = self::getClassReflection($class);
         $docBlockFactory = self::getDocBlockFactory();
-
-        if (!$classReflection->getFileName()) {
-            return '';
-        }
-        $splFileObject = new \SplFileObject($classReflection->getFileName());
 
         $comment = '';
         if ($includeClassComment) {
@@ -535,31 +535,11 @@ The following list contains all public classes in namespace :php:`%s`.
             $comment .=  sprintf('See source code on `GitHub <%s>`__.', $gitHubLink);
         }
 
-        $namespace = $classReflection->getNamespaceName();
-        $classShortName = $classReflection->getShortName();
-
-        $result = [];
-        $result[] = sprintf('..  php:namespace::  %s', $namespace);
-        $result[] = "\n\n";
-        if ($reflectionClass->isInterface()) {
-            $result[] = sprintf('..  php:interface:: %s', $classShortName);
-        } else {
-            $result[] = sprintf('..  php:class:: %s', $classShortName);
-        }
-        if ($noindexInClass) {
-            $result[] = "\n" . '    :noindex:';
-        }
-        if ($reflectionClass->isAbstract() && !$reflectionClass->isInterface()) {
-            $result[] = "\n" . '    :abstract:';
-        }
-        $result[] = "\n\n";
         if ($comment) {
-            $result[] = StringHelper::indentMultilineText($comment, '    ') . "\n\n";
+            $comment = StringHelper::indentMultilineText($comment, '    ') . "\n\n";
         }
 
-        // SplFileObject locks the file, so null it when no longer needed
-        $splFileObject = null;
-        return implode('', $result);
+        return $comment;
     }
 
     /**
