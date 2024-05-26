@@ -26,11 +26,6 @@ parameters:
 			path: ../../Classes/Util/ClassDocsHelper.php
 
 		-
-			message: "#^Variable \\$returnPart might not be defined\\.$#"
-			count: 1
-			path: ../../Classes/Util/ClassDocsHelper.php
-
-		-
 			message: "#^Variable \\$shortClass might not be defined\\.$#"
 			count: 1
 			path: ../../Classes/Util/ClassDocsHelper.php

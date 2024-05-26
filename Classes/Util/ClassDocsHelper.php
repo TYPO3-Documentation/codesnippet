@@ -28,6 +28,7 @@ namespace T3docs\Codesnippet\Util;
 
 use HaydenPierce\ClassFinder\ClassFinder;
 use phpDocumentor\Reflection\DocBlockFactory;
+use T3docs\Codesnippet\Domain\Factory\ComponentFactory;
 use T3docs\Codesnippet\Exceptions\ClassNotPublicException;
 use T3docs\Codesnippet\Exceptions\InvalidConfigurationException;
 use T3docs\Codesnippet\Utility\PhpDocToRstUtility;
@@ -48,8 +49,8 @@ class ClassDocsHelper
     /**
      * ClassDocsHelper constructor.
      */
-    public function __construct()
-    {
+    public function __construct(
+    ) {
         if (self::$docBlockFactory === null) {
             self::$docBlockFactory = DocBlockFactory::createInstance();
             self::$docBlockFactory->registerTagHandler('author', Null_::class);
@@ -284,7 +285,6 @@ The following list contains all public classes in namespace :php:`%s`.
         $includeConstructor = $config['includeConstructor'] ?? false;
         $noindexInClass = $config['noindexInClass'] ?? false;
         $noindexInClassMembers = $config['noindexInClassMembers'] ?? false;
-        $template = $config['template'] ?? '';
 
         $gitHubLink = '';
         if (isset($config['gitHubLink']) && $config['gitHubLink']) {
@@ -405,28 +405,6 @@ The following list contains all public classes in namespace :php:`%s`.
         $classBody = rtrim($classBody);
         $classBody = StringHelper::indentMultilineText($classBody, '    ');
 
-        $modifiers = [];
-        if ($classReflection->isAbstract() && !$classReflection->isInterface()) {
-            $modifiers[] = 'abstract';
-        }
-
-        $type = 'class';
-        if ($classReflection->isInterface()) {
-            $type = 'interface';
-        }
-
-        /*
-        if (!$template) {
-            $content = $classSignature . $classBody;
-        } else {
-            $content = sprintf(
-                $template,
-                $classReflection->getName(),
-                $classSignature . $classBody,
-            );
-        }
-        */
-
         $loader = new FilesystemLoader(__DIR__ . '/../../Resources/Private/Templates/');
         $twig = new Environment($loader, [
             'cache' => 'path/to/compilation_cache',
@@ -434,15 +412,18 @@ The following list contains all public classes in namespace :php:`%s`.
             'autoescape' => false, // Disable autoescaping, we generate reStructuredText, not HTML
         ]);
 
+        $componentFactory = new ComponentFactory();
+        $component = $componentFactory->createComponent($classReflection);
+
+        $settings = [
+            'noindexInClass' => $noindexInClass,
+            'includeClassComment' => $includeClassComment,
+        ];
         // Variables to pass to the template
         $context = [
-            'namespace' => $classReflection->getNamespaceName(),
-            'classSignature' => $classReflection->getShortName(),
-            'modifiers' => $modifiers,
-            'classComment' => self::getClassComment($classReflection, $gitHubLink, $includeClassComment),
-            'noindexInClass' => $noindexInClass,
+            'component' => $component,
+            'settings' => $settings,
             'classBody' => $classBody,
-            'type' => $type,
         ];
 
         // Render the template
