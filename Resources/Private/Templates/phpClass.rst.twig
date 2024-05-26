@@ -1,17 +1,17 @@
-{% if namespace -%}
-..  php:namespace::  {{ namespace }}
+{% if component.namespace -%}
+..  php:namespace::  {{ component.namespace }}
 {% endif %}
 
-..  php:{{ type }}:: {{ classSignature }}
-{% if noindexInClass %}
+..  php:{{ component.type }}:: {{ component.shortname }}
+{% if settings.noindexInClass %}
     :noindex:
 {% endif %}
-{% for modifier in modifiers %}
+{% for modifier in component.modifiers %}
     :{{ modifier }}:
 {% endfor %}
 
-{% if classComment -%}
-    {{ classComment }}
+{% if settings.includeClassComment and component.description -%}
+    {{ component.description }}
 {% endif %}
 
 {{ classBody }}
