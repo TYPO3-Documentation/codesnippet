@@ -46,7 +46,7 @@ return RectorConfig::configure()
         ConvertImplicitVariablesToExplicitGlobalsRector::class,
     ])
     ->withConfiguredRule(ExtEmConfRector::class, [
-        ExtEmConfRector::TYPO3_VERSION_CONSTRAINT => '13.1.0-13.99.99',
+        ExtEmConfRector::TYPO3_VERSION_CONSTRAINT => '12.4.0-13.99.99',
         ExtEmConfRector::ADDITIONAL_VALUES_TO_BE_REMOVED => [],
     ])
     // If you use importNames(), you should consider excluding some TYPO3 files.

@@ -116,7 +116,7 @@ class XmlHelper
 
     protected static function getValidXPath(string $xPath): string
     {
-        return empty($xPath) || substr($xPath, 0, 1) !== '/' ? '/' . $xPath : $xPath;
+        return empty($xPath) || !str_starts_with($xPath, '/') ? '/' . $xPath : $xPath;
     }
 
     protected static function startCollectingXmlErrors(): void
