@@ -16,4 +16,19 @@ test-unit: ## Regenerate code snippets
 	Build/Scripts/runTests.sh -s unit -p 8.2
 
 .PHONY: test
-test: test-lint test-cgl test-unit## Test the documentation rendering
+test: test-lint test-cgl phpstan test-unit## Test the documentation rendering
+
+.PHONY: rector
+rector: ## Run rector
+	Build/Scripts/runTests.sh -s rector -p 8.2
+
+.PHONY: phpstan
+phpstan: ## Run rector
+	Build/Scripts/runTests.sh -s phpstan -p 8.2
+
+.PHONY: phpstan-baseline
+phpstan-baseline: ## Run rector
+	Build/Scripts/runTests.sh -s phpstanBaseline -p 8.2
+
+.PHONY: fix
+fix: rector test-cgl## Fix the code
