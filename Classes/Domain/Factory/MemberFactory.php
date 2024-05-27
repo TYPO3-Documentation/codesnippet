@@ -77,11 +77,7 @@ class MemberFactory
             }
         }
 
-        $body = [];
         $code = [];
-        if ($comment) {
-            $body[] = $comment . "\n\n";
-        }
         while (!$splFileObject->eof()) {
             $line = $splFileObject->fgets();
             if (preg_match(sprintf('#(private|protected|public)[^$]*\$%s(\s*=\s*[^;]*)?;#', RstHelper::escapeRst($property)), $line) === 1) {

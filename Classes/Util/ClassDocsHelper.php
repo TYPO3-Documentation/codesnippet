@@ -17,21 +17,10 @@ declare(strict_types=1);
 
 namespace T3docs\Codesnippet\Util;
 
-/*
- * This file is part of the TYPO3 project.
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- *
- * The TYPO3 project - inspiring people to share!
- */
-
-use HaydenPierce\ClassFinder\ClassFinder;
 use phpDocumentor\Reflection\DocBlockFactory;
 use T3docs\Codesnippet\Domain\Factory\ComponentFactory;
 use T3docs\Codesnippet\Domain\Factory\MemberFactory;
 use T3docs\Codesnippet\Exceptions\ClassNotPublicException;
-use T3docs\Codesnippet\Exceptions\InvalidConfigurationException;
 use T3docs\Codesnippet\Twig\AppExtension;
 use T3docs\Codesnippet\Utility\PhpDocToRstUtility;
 use Twig\Environment;
@@ -75,200 +64,9 @@ class ClassDocsHelper
         }
     }
 
-    public static function extractPhpDomainAll(
-        array $config,
-    ) {
-        if (!$config['namespace']) {
-            throw new InvalidConfigurationException('parameter namespace is required');
-        }
-        $classes = ClassFinder::getClassesInNamespace($config['namespace'], (int) ($config['mode']) ?? 1);
-
-        $path = $config['path'] ?? '';
-        if (str_ends_with($path, '/')) {
-            $path = substr($path, 0, strlen($path) - 1);
-        }
-
-        $namespaceArray = [];
-
-        foreach ($classes as $class) {
-            $fqn = explode('\\', $class);
-            if ($config['pathMode'] === \T3docs\Codesnippet\Util\CodeSnippetCreator::RECURSIVE_PATH) {
-                $pathPart = str_replace($config['namespace'], '', $class);
-                $pathPart = str_replace('\\', '/', $pathPart);
-                $pathPart = substr($pathPart, 1);
-                $outputPath =  $path . '/' . $pathPart;
-            } else {
-                $outputPath =  $path . '/' . $fqn[count($fqn) - 1];
-            }
-            $classPartArray = explode('\\', $class);
-            if (count($classPartArray) > 1) {
-                $shortClass = $classPartArray[count($classPartArray) - 1];
-            }
-            $extractPhpDomainConfig = [
-                'class' => $class,
-                'targetFileName' => '/CodeSnippets/' . $outputPath . '.rst.txt',
-                'rstFileName' => $outputPath . '.rst',
-                'gitHubLink' => $config['gitHubLink'],
-                'mainNamespace' => $config['mainNamespace'],
-                'withCode' => false,
-            ];
-            $rstContent = sprintf(
-                '..  include:: /Includes.rst.txt
-
-================================================================================
-%s
-================================================================================
-
-..  include:: /CodeSnippets/%s.rst.txt
-',
-                RstHelper::escapeRst($shortClass),
-                $outputPath,
-            );
-
-            try {
-                $content = ClassDocsHelper::extractPhpDomain($extractPhpDomainConfig);
-                CodeSnippetCreator::writeFile(
-                    $extractPhpDomainConfig,
-                    $content,
-                    $rstContent,
-                    $config['overwriteRst'] ?? false,
-                );
-                // only add Index.rst to directory if there was a rstfile written
-                $rstDir = str_replace($config['namespace'], '', $class);
-                $rstDirArray = explode('\\', $rstDir);
-                if (count($rstDirArray) > 0) {
-                    unset($rstDirArray[count($rstDirArray) - 1]);
-                }
-                $collectedClassPart = '';
-                $arrayKeys = array_keys($rstDirArray);
-                $lastKey = end($arrayKeys);
-                foreach ($rstDirArray as $key => $rstDirPart) {
-                    $collectedClassPart .= ($collectedClassPart == '') ? '' : '\\';
-                    $collectedClassPart .= $rstDirPart;
-                    if ($key == $lastKey) {
-                        if (!isset($namespaceArray[$collectedClassPart])) {
-                            $namespaceArray[$collectedClassPart] = [
-                                'short' => $rstDirPart,
-                                'hasSubDirs' => false,
-                                'hasChildren' => true,
-                            ];
-                        } else {
-                            $namespaceArray[$collectedClassPart]['hasChildren'] = true;
-                        }
-                    } else {
-                        if (!isset($namespaceArray[$collectedClassPart])) {
-                            $namespaceArray[$collectedClassPart] = [
-                                'short' => $rstDirPart,
-                                'hasSubDirs' => true,
-                                'hasChildren' => false,
-                            ];
-                        } else {
-                            $namespaceArray[$collectedClassPart]['hasSubDirs'] = true;
-                        }
-                    }
-                }
-            } catch (ClassNotPublicException $e) {
-                // ignore internal classes
-            }
-        }
-
-        foreach ($namespaceArray as $addedNameSpace => $addedNameSpaceConfig) {
-            if (!$addedNameSpaceConfig['short']) {
-                $addedNameSpaceConfig['short'] = $config['namespace'];
-            }
-            $tree = '';
-            if ($addedNameSpaceConfig['hasSubDirs']) {
-                $tree .= '    */Index' . LF;
-            }
-            if ($addedNameSpaceConfig['hasChildren']) {
-                $tree .= '    *' . LF;
-            }
-            $indexContent = sprintf(
-                '
-..  include:: /Includes.rst.txt
-
-================================================================================
-%s
-================================================================================
-
-
-The following list contains all public classes in namespace :php:`%s`.
-
-..  toctree::
-   :titlesonly:
-   :maxdepth: 1
-   :caption: %s
-   :glob:
-
-%s
-',
-                RstHelper::escapeRst($addedNameSpaceConfig['short']),
-                $config['namespace'] . '\\' . $addedNameSpace,
-                $config['namespace'] . '\\' . $addedNameSpace,
-                $tree,
-            );
-            $indexPart = str_replace($config['namespace'], '', $addedNameSpace);
-            $indexPart = $config['path'] . str_replace('\\', '/', $indexPart);
-            CodeSnippetCreator::writeSimpleFile($indexContent, $indexPart . '/Index.rst');
-        }
-    }
-
     /**
-     * Extract constants, properties and methods from class, e.g.
-     *
-     * Input:
-     * namespace Vendor\Extension\MyNamespace;
-     *
-     * use MyOtherNamespace\MyFirstClass;
-     * use MyOtherNamespace\MySecondClass;
-     *
-     * class MyClass
-     * {
-     *      protected const MY_CONSTANT = 'MY_CONSTANT';
-     *
-     *      public string $myVariable = 'myValue';
-     *
-     *      public function myMethod(): string
-     *      {
-     *          return 'I am the method code';
-     *      }
-     *
-     *      public function createMyFirstObject(array $options, int limit = 0): MyFirstClass
-     *      {
-     *          return new MyFirstClass();
-     *      }
-     *
-     *      public function createMySecondObject(): MySecondClass
-     *      {
-     *          return new MySecondClass();
-     *      }
-     * }
-     * Members: ["myVariable", "createMyFirstObject"]
-     * Output:
-     *
-     *
-     * ..  php:namespace:: Vendor\Extension\MyNamespace\
-     *
-     * ..  php:class:: MyClass
-     *
-     *    ..  php:const:: MY_CONSTANT
-     *
-     *         MY_CONSTANT
-     *
-     *    ..  php:attr:: myVariable
-     *
-     *            *  Value of some attribute
-     *
-     *    ..  php:method:: createMyFirstObject(string $column, string $columnName = '')
-     *
-     *         Add a new column or override an existing one. Latter is only possible,
-     *         in case $columnName is given. Otherwise, the column will be added with
-     *         a numeric index, which is generally not recommended.
-     *
-     *         :param array $options: the options
-     *         :param int $limit: Optional: the limit
-     *         :returntype: MyFirstClass
-     *         :returns: Some cool object
+     * Extract constants, properties and methods from class,
+     * And renders them with a twig template
      *
      * @throws ClassNotPublicException
      */
@@ -408,12 +206,8 @@ The following list contains all public classes in namespace :php:`%s`.
         // Add the custom extension
         $twig->addExtension(new AppExtension());
 
-        $constants = array_filter($constants, function ($item) {
-            return $item !== null;
-        });
-        $properties = array_filter($properties, function ($item) {
-            return $item !== null;
-        });
+        $constants = array_filter($constants, fn($item) => $item !== null);
+        $properties = array_filter($properties, fn($item) => $item !== null);
 
         $componentFactory = new ComponentFactory();
         $component = $componentFactory->createComponent($classReflection);
@@ -612,8 +406,8 @@ The following list contains all public classes in namespace :php:`%s`.
             $default = '';
             if ($optional) {
                 try {
-                    $default = ArrayHelper::varExportArrayShort($parameter->getDefaultValue(), true);
-                } catch (\ReflectionException $e) {
+                    $default = ArrayHelper::varExportArrayShort($parameter->getDefaultValue());
+                } catch (\ReflectionException) {
                 }
             }
             // Check if the parameter is passed by reference
@@ -808,7 +602,7 @@ The following list contains all public classes in namespace :php:`%s`.
         try {
             $reflectionClass = new \ReflectionClass($className);
             $className = '\\' . $reflectionClass->getName();
-        } catch (\Exception | \Throwable $e) {
+        } catch (\Exception | \Throwable) {
             // It's a scalar type, array or non-object
         }
 

@@ -82,8 +82,8 @@ class ClassHelper
      */
     public static function extractMembersFromClass(array $config): string
     {
-        $withComment = $config['withComment'] = isset($config['withComment']) ? $config['withComment'] : false;
-        $config['withClassComment'] = isset($config['withClassComment']) ? $config['withClassComment'] : $config['withComment'];
+        $withComment = $config['withComment'] ??= false;
+        $config['withClassComment'] ??= $config['withComment'];
         $class = $config['class'];
         $classReflection = self::getClassReflection($class);
 

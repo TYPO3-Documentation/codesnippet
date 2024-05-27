@@ -192,7 +192,7 @@ class FileHelper
             if ($segment !== '') {
                 $segment = str_replace(['/', '\\'], '/', $segment);
                 if ($position === 0 && self::isAbsoluteUrl($segment)) {
-                    $segment = substr($segment, -1) === '/' ? substr($segment, 0, -1) : $segment;
+                    $segment = str_ends_with($segment, '/') ? substr($segment, 0, -1) : $segment;
                     $path[] = $segment;
                 } else {
                     $segment = trim($segment, '/');

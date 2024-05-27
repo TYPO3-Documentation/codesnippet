@@ -25,7 +25,7 @@ namespace T3docs\Codesnippet\Util;
  *
  * The TYPO3 project - inspiring people to share!
  */
-
+use T3docs\Codesnippet\Exceptions\ClassNotPublicException;
 use Symfony\Component\Filesystem\Exception\FileNotFoundException;
 use TYPO3\CMS\Core\Utility\ArrayUtility;
 
@@ -216,8 +216,8 @@ class Typo3CodeSnippets
     ): string {
         $config['code'] = $this->readPhpClass($config);
 
-        $config['sourceHint'] = $config['sourceHint'] ?? $config['class'];
-        $config['caption'] = $config['caption'] ?? 'Class ' . RstHelper::escapeRst($config['class']);
+        $config['sourceHint'] ??= $config['class'];
+        $config['caption'] ??= 'Class ' . RstHelper::escapeRst($config['class']);
         $config['language'] = 'php';
         return $this->getCodeBlockRst($config);
     }
@@ -364,42 +364,24 @@ class Typo3CodeSnippets
     {
         $fileExtension = pathinfo($filePath, PATHINFO_EXTENSION);
 
-        switch ($fileExtension) {
-            case 'json':
-                $language = 'json';
-                break;
-            case 'xml':
-            case 'xlf':
-                $language = 'xml';
-                break;
-            case 'ts':
-            case 'typoscript':
-                $language = 'typoscript';
-                break;
-            case 'sql':
-                $language = 'sql';
-                break;
-            case 'html':
-                $language = 'html';
-                break;
-            case 'yaml':
-            case 'yml':
-                $language = 'yaml';
-                break;
-            case 'php':
-                $language = 'php';
-                break;
-            default:
-                throw new \Exception(
-                    sprintf(
-                        'The programming language of the file "%s" cannot be determined automatically via the ' .
-                        'file extension "%s". Please specify the language explicitly.',
-                        $filePath,
-                        $fileExtension,
-                    ),
-                    4001,
-                );
-        }
+        $language = match ($fileExtension) {
+            'json' => 'json',
+            'xml', 'xlf' => 'xml',
+            'ts', 'typoscript' => 'typoscript',
+            'sql' => 'sql',
+            'html' => 'html',
+            'yaml', 'yml' => 'yaml',
+            'php' => 'php',
+            default => throw new \Exception(
+                sprintf(
+                    'The programming language of the file "%s" cannot be determined automatically via the ' .
+                    'file extension "%s". Please specify the language explicitly.',
+                    $filePath,
+                    $fileExtension,
+                ),
+                4001,
+            ),
+        };
 
         return $language;
     }
@@ -442,7 +424,7 @@ class Typo3CodeSnippets
     }
 
     /**
-     * @throws \T3docs\Codesnippet\Exceptions\ClassNotPublicException
+     * @throws ClassNotPublicException
      * @throws \ReflectionException
      */
     protected function transformPhpToDocs(
