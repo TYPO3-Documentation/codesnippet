@@ -1,0 +1,11 @@
+..  php:const:: {{ constant.name }}
+{% if settings.noindexInClassMembers %}
+    :noindex:
+{% endif %}
+{% for modifier in constant.modifiers %}
+    :{{ modifier }}:
+{% endfor %}
+
+{% if settings.includeClassComment and constant.description -%}
+    {{ constant.description }}
+{% endif %}
