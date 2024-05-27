@@ -29,8 +29,10 @@ namespace T3docs\Codesnippet\Util;
 use HaydenPierce\ClassFinder\ClassFinder;
 use phpDocumentor\Reflection\DocBlockFactory;
 use T3docs\Codesnippet\Domain\Factory\ComponentFactory;
+use T3docs\Codesnippet\Domain\Factory\MemberFactory;
 use T3docs\Codesnippet\Exceptions\ClassNotPublicException;
 use T3docs\Codesnippet\Exceptions\InvalidConfigurationException;
+use T3docs\Codesnippet\Twig\AppExtension;
 use T3docs\Codesnippet\Utility\PhpDocToRstUtility;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
@@ -299,6 +301,7 @@ The following list contains all public classes in namespace :php:`%s`.
             throw new ClassNotPublicException('Class ' . $class . ' is marked as internal.');
         }
         $modifierSum = 0;
+        $memberFactory = new MemberFactory();
 
         foreach ($allowedModifiers as $modifier) {
             if ($modifier === 'public') {
@@ -317,6 +320,9 @@ The following list contains all public classes in namespace :php:`%s`.
         }
 
         $result = [];
+        $constants = [];
+        $properties = [];
+        $memberFactory = new MemberFactory();
         if ($members) {
             foreach ($members as $member) {
                 if ($classReflection->hasMethod($member)) {
@@ -334,22 +340,16 @@ The following list contains all public classes in namespace :php:`%s`.
                         $includeMethodParameters,
                     );
                 } elseif ($classReflection->hasProperty($member)) {
-                    $result['properties'][] = self::getPropertyCode(
-                        $class,
+                    $properties[] = $memberFactory->getProperty(
+                        $classReflection,
                         $member,
-                        $withCode,
                         $modifierSum,
-                        $noindexInClassMembers,
-                        $includeMemberComment,
                     );
                 } elseif ($classReflection->hasConstant($member)) {
-                    $result['constants'][] = self::getConstantCode(
-                        $class,
+                    $constants[] = $memberFactory->getConstant(
+                        $classReflection,
                         $member,
-                        $withCode,
                         $modifierSum,
-                        $noindexInClassMembers,
-                        $includeMemberComment,
                     );
                 } else {
                     throw new \ReflectionException(
@@ -378,39 +378,42 @@ The following list contains all public classes in namespace :php:`%s`.
                 );
             }
             foreach ($classReflection->getProperties() as $property) {
-                $result['properties'][] = self::getPropertyCode(
-                    $class,
+                $properties[] = $memberFactory->getProperty(
+                    $classReflection,
                     $property->getName(),
-                    $withCode,
                     $modifierSum,
-                    $noindexInClassMembers,
-                    $includeMemberComment,
                 );
             }
             foreach ($classReflection->getConstants() as $constant => $constantValue) {
-                $result['constants'][] = self::getConstantCode(
-                    $class,
+                $constants[] = $memberFactory->getConstant(
+                    $classReflection,
                     $constant,
-                    $withCode,
                     $modifierSum,
-                    $noindexInClassMembers,
-                    $includeMemberComment,
                 );
             }
         }
 
-        $classBody = isset($result['constants']) ? implode('', array_filter($result['constants'])) . "\n" : '';
-        $classBody .= isset($result['properties']) ? implode("\n", array_filter($result['properties'])) . "\n" : '';
+        $classBody = isset($result['properties']) ? implode("\n", array_filter($result['properties'])) . "\n" : '';
         $classBody .= isset($result['methods']) ? implode("\n", array_filter($result['methods'])) . "\n" : '';
         $classBody = rtrim($classBody);
         $classBody = StringHelper::indentMultilineText($classBody, '    ');
 
         $loader = new FilesystemLoader(__DIR__ . '/../../Resources/Private/Templates/');
         $twig = new Environment($loader, [
-            'cache' => 'path/to/compilation_cache',
+            'cache' => '.Build/.cache/twig/',
             'debug' => true,
             'autoescape' => false, // Disable autoescaping, we generate reStructuredText, not HTML
         ]);
+
+        // Add the custom extension
+        $twig->addExtension(new AppExtension());
+
+        $constants = array_filter($constants, function ($item) {
+            return $item !== null;
+        });
+        $properties = array_filter($properties, function ($item) {
+            return $item !== null;
+        });
 
         $componentFactory = new ComponentFactory();
         $component = $componentFactory->createComponent($classReflection);
@@ -418,12 +421,15 @@ The following list contains all public classes in namespace :php:`%s`.
         $settings = [
             'noindexInClass' => $noindexInClass,
             'includeClassComment' => $includeClassComment,
+            'noindexInClassMembers' => $noindexInClassMembers,
         ];
         // Variables to pass to the template
         $context = [
             'component' => $component,
             'settings' => $settings,
             'classBody' => $classBody,
+            'constants' => $constants,
+            'properties' => $properties,
         ];
 
         // Render the template
@@ -490,37 +496,6 @@ The following list contains all public classes in namespace :php:`%s`.
         }
 
         return $alias;
-    }
-
-    public static function getClassComment(
-        \ReflectionClass $classReflection,
-        $gitHubLink = '',
-        $includeClassComment = true,
-    ): string {
-        $docBlockFactory = self::getDocBlockFactory();
-
-        $comment = '';
-        if ($includeClassComment) {
-            $docComment = $classReflection->getDocComment();
-            if ($docComment) {
-                $docBlock = $docBlockFactory->create($docComment);
-                $comment = $docBlock->getSummary();
-                if ($docBlock->getDescription()->render()) {
-                    $comment .= "\n\n" . $docBlock->getDescription()->render();
-                }
-                $comment = PhpDocToRstUtility::convertComment($comment);
-            }
-        }
-        if ($gitHubLink) {
-            $comment .= "\n\n";
-            $comment .=  sprintf('See source code on `GitHub <%s>`__.', $gitHubLink);
-        }
-
-        if ($comment) {
-            $comment = StringHelper::indentMultilineText($comment, '    ') . "\n\n";
-        }
-
-        return $comment;
     }
 
     /**
@@ -826,167 +801,6 @@ The following list contains all public classes in namespace :php:`%s`.
         }
 
         return self::$docBlockFactory;
-    }
-
-    /**
-     * Extract member variable from class, e.g.
-     *
-     * Input:
-     * class MyClass
-     * {
-     *      public string $myVariable = 'myValue';
-     * }
-     * Property: myVariable
-     * Output:
-     *      public string $myVariable = 'myValue';
-     *
-     * @param string $class Class name, e.g. "TYPO3\CMS\Core\Cache\Backend\FileBackend"
-     * @param string $property Property name, e.g. "frozen"
-     * @param bool $withCode Include the complete property code?
-     * @param int $modifierSum sum of all modifiers (i.e. \ReflectionMethod::IS_PUBLIC + \ReflectionMethod::IS_PROTECTED)
-     * @param bool $allowInternal Include Internal methods?
-     * @param bool $allowDeprecated Include Deprecated methods?
-     * @return string
-     */
-    public static function getPropertyCode(
-        string $class,
-        string $property,
-        bool $withCode,
-        int $modifierSum,
-        bool $noindexInClassMembers,
-        bool $includeMemberComment,
-    ): string {
-        $classReflection = self::getClassReflection($class);
-        $propertyReflection = $classReflection->getProperty($property);
-        if (!$classReflection->getFileName()) {
-            return '';
-        }
-        $splFileObject = new \SplFileObject($classReflection->getFileName());
-
-        if (
-            ($propertyReflection->isProtected() && (($modifierSum & \ReflectionMethod::IS_PROTECTED) == 0))
-            or ($propertyReflection->isPrivate() && (($modifierSum & \ReflectionMethod::IS_PRIVATE) == 0))
-        ) {
-            return '';
-        }
-
-        $docBlockFactory = self::getDocBlockFactory();
-        $docComment = $propertyReflection->getDocComment();
-        $comment = '';
-        if ($docComment) {
-            $docBlock = $docBlockFactory->create($docComment);
-            $comment = $docBlock->getSummary();
-            if ($docBlock->getDescription()->render()) {
-                $comment .= "\n\n" . $docBlock->getDescription()->render();
-            }
-        }
-
-        $header = sprintf('..  php:attr:: %s', RstHelper::escapeRst($property)) . "\n";
-        if ($noindexInClassMembers) {
-            $header .= '    :noindex:' . "\n";
-        }
-        $header .=  "\n";
-        $body = [];
-        $code = [];
-        if ($comment) {
-            $body[] = $comment . "\n\n";
-        }
-        while (!$splFileObject->eof()) {
-            $line = $splFileObject->fgets();
-            if (preg_match(sprintf('#(private|protected|public)[^$]*\$%s(\s*=\s*[^;]*)?;#', RstHelper::escapeRst($property)), $line) === 1) {
-                $code[] = $line;
-                break;
-            }
-        }
-        if ($code) {
-            $code = implode('', $code);
-            if ($withCode) {
-                $body[] = '..  code-block:: php' . "\n\n";
-                $body[] = StringHelper::indentMultilineText($code, '    ');
-            }
-        }
-
-        // SplFileObject locks the file, so null it when no longer needed
-        $splFileObject = null;
-        if ($includeMemberComment) {
-            return $header . StringHelper::indentMultilineText(implode('', $body), '    ');
-        }
-        return $header;
-    }
-
-    /**
-     * Extract constant from class, e.g.
-     *
-     * Input:
-     * class MyClass
-     * {
-     *      protected const MY_CONSTANT = 'MY_CONSTANT';
-     * }
-     * Constant: MY_CONSTANT
-     * Output:
-     *      protected const MY_CONSTANT = 'MY_CONSTANT';
-     *
-     * @param string $class Class name, e.g. "TYPO3\CMS\Core\Cache\Backend\FileBackend"
-     * @param string $constant Constant name, e.g. "SEPARATOR"
-     * @param bool $withCode Include the complete method as code example?
-     * @param int $modifierSum sum of all modifiers (i.e. \ReflectionMethod::IS_PUBLIC + \ReflectionMethod::IS_PROTECTED)
-     * @return string
-     */
-    public static function getConstantCode(
-        string $class,
-        string $constant,
-        bool $withCode,
-        int $modifierSum,
-        bool $noindexInClassMembers,
-        bool $includeMemberComment,
-    ): string {
-        $classReflection = self::getClassReflection($class);
-        $constantReflection = $classReflection->getConstant($constant);
-
-        if (!$classReflection->getFileName()) {
-            return '';
-        }
-        $splFileObject = new \SplFileObject($classReflection->getFileName());
-
-        $header = sprintf('..  php:const:: %s', RstHelper::escapeRst($constant)) . "\n";
-        if ($noindexInClassMembers) {
-            $header .= '    :noindex:' . "\n";
-        }
-        $header .=  "\n";
-        $body = [];
-        $body[] = sprintf(':php:`%s`, type %s', var_export($constantReflection, true), gettype($constantReflection)) . "\n\n";
-        $code = [];
-
-        while (!$splFileObject->eof()) {
-            $line = $splFileObject->fgets();
-            if (preg_match(sprintf(
-                '#const[\s]*%s\s*=\s*[^;]*;#',
-                $constant,
-            ), $line) === 1) {
-                $code[] = $line;
-                break;
-            }
-        }
-        if ($code) {
-            $code = implode('', $code);
-            if (
-                (str_contains($code, 'protected') && (($modifierSum & \ReflectionMethod::IS_PROTECTED) == 0))
-                or (str_contains($code, 'private') && (($modifierSum & \ReflectionMethod::IS_PRIVATE) == 0))
-            ) {
-                return '';
-            }
-            if ($withCode) {
-                $body[] = '..  code-block:: php' . "\n";
-                $body[] = StringHelper::indentMultilineText($code, '    ');
-            }
-        }
-
-        // SplFileObject locks the file, so null it when no longer needed
-        $splFileObject = null;
-        if ($includeMemberComment) {
-            return $header . StringHelper::indentMultilineText(implode('', $body), '    ');
-        }
-        return $header;
     }
 
     private static function getFullQualifiedClassNameIfPossible(string $className): string

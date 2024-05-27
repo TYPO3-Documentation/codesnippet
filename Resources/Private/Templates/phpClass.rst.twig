@@ -12,6 +12,22 @@
 
 {% if settings.includeClassComment and component.description -%}
     {{ component.description }}
-{% endif %}
 
-{{ classBody }}
+{% endif -%}
+
+{%- for constant in constants -%}
+    {%- set constantContent -%}
+        {% include 'constant.rst.twig' with {'constant': constant} %}
+    {%- endset -%}
+    {{- indent_multiline_text(constantContent, 1) }}
+
+{% endfor -%}
+
+{%- for property in properties -%}
+    {%- set propertyContent -%}
+        {% include 'property.rst.twig' with {'property': property} %}
+    {%- endset -%}
+    {{- indent_multiline_text(propertyContent, 1) }}
+{% endfor -%}
+
+{{- classBody }}

@@ -1,0 +1,11 @@
+..  php:attr:: {{ property.name }}
+{% if settings.noindexInClassMembers %}
+    :noindex:
+{% endif %}
+{% for modifier in property.modifiers %}
+    :{{ modifier }}:
+{% endfor %}
+
+{% if settings.includeClassComment and property.description -%}
+    {{ property.description }}
+{% endif %}
