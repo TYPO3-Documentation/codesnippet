@@ -21,7 +21,7 @@ class Type
         public readonly string $name,
     ) {}
 
-    public function toString(): string
+    public function __toString(): string
     {
         return $this->name;
     }

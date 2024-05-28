@@ -44,9 +44,6 @@ class CodeSnippetCreator
         foreach ($config as $entry) {
             if (is_array($entry) && $entry['action']) {
                 switch ($entry['action']) {
-                    case 'createPhpClassDocsAll':
-                        ClassDocsHelper::extractPhpDomainAll($entry);
-                        break;
                     case 'createPhpClassDocs':
                         $content = ClassDocsHelper::extractPhpDomain($entry);
                         static::writeFile($entry, $content);

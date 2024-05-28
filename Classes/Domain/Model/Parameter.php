@@ -15,16 +15,13 @@
 
 namespace T3docs\Codesnippet\Domain\Model;
 
-class ParameterMember extends Member
+class Parameter
 {
     public function __construct(
-        ?Type $type,
-        string $name,
-        string $description,
-        array $modifiers,
-        string $code,
+        public readonly ?Type $type,
+        public readonly string $name,
+        public readonly string $description,
         public readonly string $default,
-    ) {
-        parent::__construct('parameter', $type, $name, $description, $modifiers, $code);
-    }
+        public readonly array $modifiers,
+    ) {}
 }

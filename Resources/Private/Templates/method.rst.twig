@@ -1,0 +1,25 @@
+..  php:method:: {{ method.name }}({{ method.parametersInSigniture }})
+{% if method.returnType %}
+    :returns: `{{ method.returnType }}`
+{% endif %}
+{% if settings.noindexInClassMembers %}
+    :noindex:
+{% endif %}
+{% for modifier in method.modifiers %}
+    :{{ modifier }}:
+{% endfor %}
+
+{% if settings.includeMemberComment and method.description -%}
+    {{- indent_multiline_text(method.description, 1) }}
+
+{% endif -%}
+
+{%- if settings.includeMethodParameters -%}
+{%- for parameter in method.parameters %}
+    :param {{ parameter.name }}: {{ parameter.description }}{% if parameter.default %}, default: {{ parameter.default }}{% endif %}
+
+{% endfor -%}
+{%- if method.returnDescription %}
+    :returns: {{ method.returnDescription }}
+{% endif -%}
+{%- endif -%}
