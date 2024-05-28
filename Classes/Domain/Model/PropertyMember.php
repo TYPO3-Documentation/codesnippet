@@ -25,6 +25,6 @@ class PropertyMember extends Member
         string $code,
         public readonly string $default,
     ) {
-        parent::__construct('parameter', $type, $name, $description, $modifiers, $code);
+        parent::__construct('property', $type, $name, $description, $modifiers, $code);
     }
 }

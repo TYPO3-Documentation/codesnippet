@@ -30,4 +30,9 @@
     {{- indent_multiline_text(propertyContent, 1) }}
 {% endfor -%}
 
-{{- classBody }}
+{%- for method in methods -%}
+    {%- set methodContent -%}
+        {% include 'method.rst.twig' with {'method': method} %}
+    {%- endset -%}
+    {{-  indent_multiline_text(methodContent, 1) }}
+{% endfor -%}

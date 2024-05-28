@@ -20,6 +20,9 @@ namespace T3docs\Codesnippet\Util;
 use phpDocumentor\Reflection\DocBlockFactory;
 use T3docs\Codesnippet\Domain\Factory\ComponentFactory;
 use T3docs\Codesnippet\Domain\Factory\MemberFactory;
+use T3docs\Codesnippet\Domain\Model\MethodMember;
+use T3docs\Codesnippet\Domain\Model\Parameter;
+use T3docs\Codesnippet\Domain\Model\Type;
 use T3docs\Codesnippet\Exceptions\ClassNotPublicException;
 use T3docs\Codesnippet\Twig\AppExtension;
 use T3docs\Codesnippet\Utility\PhpDocToRstUtility;
@@ -120,22 +123,18 @@ class ClassDocsHelper
         $result = [];
         $constants = [];
         $properties = [];
+        $methods = [];
         $memberFactory = new MemberFactory();
         if ($members) {
             foreach ($members as $member) {
                 if ($classReflection->hasMethod($member)) {
-                    $result['methods'][] = self::getMethodCode(
+                    $methods[] = self::getMethodCode(
                         $class,
                         $member,
-                        $withCode,
                         $modifierSum,
                         $allowInternal,
                         $allowDeprecated,
                         $includeConstructor,
-                        $gitHubLink,
-                        $noindexInClassMembers,
-                        $includeMemberComment,
-                        $includeMethodParameters,
                     );
                 } elseif ($classReflection->hasProperty($member)) {
                     $properties[] = $memberFactory->getProperty(
@@ -161,18 +160,13 @@ class ClassDocsHelper
             }
         } else {
             foreach ($classReflection->getMethods() as $method) {
-                $result['methods'][] = self::getMethodCode(
+                $methods[] = self::getMethodCode(
                     $class,
                     $method->getShortName(),
-                    $withCode,
                     $modifierSum,
                     $allowInternal,
                     $allowDeprecated,
                     $includeConstructor,
-                    $gitHubLink,
-                    $noindexInClassMembers,
-                    $includeMemberComment,
-                    $includeMethodParameters,
                 );
             }
             foreach ($classReflection->getProperties() as $property) {
@@ -191,10 +185,9 @@ class ClassDocsHelper
             }
         }
 
-        $classBody = isset($result['properties']) ? implode("\n", array_filter($result['properties'])) . "\n" : '';
-        $classBody .= isset($result['methods']) ? implode("\n", array_filter($result['methods'])) . "\n" : '';
-        $classBody = rtrim($classBody);
-        $classBody = StringHelper::indentMultilineText($classBody, '    ');
+        $constants = array_filter($constants, fn($item) => $item !== null);
+        $properties = array_filter($properties, fn($item) => $item !== null);
+        $methods = array_filter($methods, fn($item) => $item !== null);
 
         $loader = new FilesystemLoader(__DIR__ . '/../../Resources/Private/Templates/');
         $twig = new Environment($loader, [
@@ -206,9 +199,6 @@ class ClassDocsHelper
         // Add the custom extension
         $twig->addExtension(new AppExtension());
 
-        $constants = array_filter($constants, fn($item) => $item !== null);
-        $properties = array_filter($properties, fn($item) => $item !== null);
-
         $componentFactory = new ComponentFactory();
         $component = $componentFactory->createComponent($classReflection);
 
@@ -216,14 +206,16 @@ class ClassDocsHelper
             'noindexInClass' => $noindexInClass,
             'includeClassComment' => $includeClassComment,
             'noindexInClassMembers' => $noindexInClassMembers,
+            'includeMemberComment' => $includeMemberComment,
+            'includeMethodParameters' => $includeMethodParameters,
         ];
         // Variables to pass to the template
         $context = [
             'component' => $component,
             'settings' => $settings,
-            'classBody' => $classBody,
             'constants' => $constants,
             'properties' => $properties,
+            'methods' => $methods,
         ];
 
         // Render the template
@@ -240,44 +232,6 @@ class ClassDocsHelper
         return self::$reflectors[$class];
     }
 
-    protected static function getUseStatementsRequiredByClassBody(string $class, string $classBody): string
-    {
-        $useStatements = explode("\n", trim(self::getUseStatements($class)));
-        $useStatementsRequired = [];
-
-        foreach ($useStatements as $useStatement) {
-            $alias = self::getAliasFromUseStatement($useStatement);
-            if ($alias !== '' && preg_match(sprintf('#\W%s\W#', $alias), $classBody) === 1) {
-                $useStatementsRequired[] = $useStatement . "\n";
-            }
-        }
-
-        return implode('', $useStatementsRequired);
-    }
-
-    public static function getUseStatements(string $class): string
-    {
-        $classReflection = self::getClassReflection($class);
-        if (!$classReflection->getFileName()) {
-            return '';
-        }
-        $splFileObject = new \SplFileObject($classReflection->getFileName());
-
-        $startLineBody = $classReflection->getStartLine();
-
-        $result = [];
-        for ($lineNumber = 0; $lineNumber <= $startLineBody; $lineNumber++) {
-            $splFileObject->seek($lineNumber);
-            $line = $splFileObject->current();
-            if (preg_match('#^use [^;]*;#', $line) === 1) {
-                $result[] = $line;
-            }
-        }
-
-        // SplFileObject locks the file, so null it when no longer needed
-        $splFileObject = null;
-        return implode('', $result);
-    }
 
     public static function getAliasFromUseStatement(string $useStatement): string
     {
@@ -335,16 +289,11 @@ class ClassDocsHelper
     public static function getMethodCode(
         string $class,
         string $method,
-        bool $withCode,
         int $modifierSum,
         bool $allowInternal,
         bool $allowDeprecated,
         bool $includeConstructor,
-        string $gitHubLink,
-        bool $noindexInClassMembers,
-        bool $includeMemberComment,
-        bool $includeMethodParameters,
-    ): string {
+    ): MethodMember|null {
         $methodReflection = self::getMethodReflection($class, $method);
         $isInternal = is_string($methodReflection->getDocComment())
             && str_contains($methodReflection->getDocComment(), '* @internal');
@@ -355,12 +304,12 @@ class ClassDocsHelper
             or (($modifierSum & $methodReflection->getModifiers()) == 0)
             or (!$includeConstructor && $method == '__construct')
         ) {
-            return '';
+            return null;
         }
         $docBlockFactory = self::getDocBlockFactory();
 
         if (!$methodReflection->getFileName()) {
-            return '';
+            return null;
         }
         $splFileObject = new \SplFileObject($methodReflection->getFileName());
 
@@ -374,11 +323,8 @@ class ClassDocsHelper
                 $startLineSignature = $lineNumber;
             }
         }
-        $methodName = $methodReflection->getName();
         $returnType = $methodReflection->getReturnType();
         $parameters = $methodReflection->getParameters();
-        $parameterInSignature = [];
-        $parameterInRst = [];
         $parameterResolved = [];
         foreach ($parameters as $parameter) {
             $paramName = $parameter->getName();
@@ -475,7 +421,8 @@ class ClassDocsHelper
         }
 
         $parameterInSignature = [];
-        $parameterInRst = [];
+
+        $parameters = [];
         foreach ($parameterResolved as $param) {
             if (!$param['description']) {
                 $param['description'] = sprintf('the %s', str_replace('$', '', $param['name']));
@@ -487,54 +434,33 @@ class ClassDocsHelper
             }
             if ($param['default']) {
                 $parameterInSignature[] = sprintf('%s%s %s%s%s = %s', $param['nullable'], $param['type'], $param['variadic'], $param['passedByReference'], $param['name'], $param['default']);
-                $parameterInRst[] = sprintf(':param %s: %s, default: %s', $param['name'], $param['description'], $param['default']);
             } else {
                 $parameterInSignature[] = sprintf('%s%s %s%s%s', $param['nullable'], $param['type'], $param['variadic'], $param['passedByReference'], $param['name']);
-                $parameterInRst[] = sprintf(':param %s: %s', $param['name'], $param['description']);
             }
+            $modifiers = [];
+            if ($param['variadic']) {
+                $modifiers['variadic'] = $param['variadic'];
+            }
+            if ($param['passedByReference']) {
+                $modifiers['passedByReference'] = $param['passedByReference'];
+            }
+            $parameters[] = new Parameter(
+                new Type($param['nullable'].$param['type']),
+                $param['name'],
+                str_replace("\n", '', $param['description']),
+                $param['default'],
+                $modifiers
+            );
         }
         $codeResult = [];
-        if ($withCode) {
-            for ($lineNumber = $startLineSignature; $lineNumber < $endLineBody; $lineNumber++) {
-                $splFileObject->seek($lineNumber);
-                $codeResult[] = $splFileObject->current();
-            }
+        for ($lineNumber = $startLineSignature; $lineNumber < $endLineBody; $lineNumber++) {
+            $splFileObject->seek($lineNumber);
+            $codeResult[] = $splFileObject->current();
         }
         $code = implode('', $codeResult);
 
-        $result = [];
-        if ($gitHubLink) {
-            $comment .= "\n\n";
-            if ($startLineSignature) {
-                $comment .= sprintf(
-                    'See source code on `GitHub <%s>`__.',
-                    $gitHubLink . '#L' . $startLineSignature,
-                );
-            } else {
-                $comment .= sprintf(
-                    'See source code on `GitHub <%s>`__.',
-                    $gitHubLink,
-                );
-            }
-        }
-        if ($comment && $includeMemberComment) {
-            $result[] = $comment;
-            $result[] = "\n\n";
-        }
-        if ($code) {
-            $result[] = '..  code-block:: php';
-            $result[] = "\n\n";
-            $result[] = StringHelper::indentMultilineText($code, '    ');
-            $result[] = "\n\n";
-        }
-
-        if ($includeMethodParameters && $parameterInRst) {
-            $result[] = implode("\n", $parameterInRst) . "\n";
-        }
-
-        $returnPart = '';
+        $typeNames = '';
         if ($returnType instanceof \ReflectionUnionType or $returnType instanceof \ReflectionNamedType && $returnType->getName() != 'void') {
-            $typeNames = '';
             if ($returnType instanceof \ReflectionNamedType) {
                 $typeNames = $returnType->allowsNull()
                     ? '?' . self::getFullQualifiedClassNameIfPossible($returnType->getName())
@@ -549,28 +475,27 @@ class ClassDocsHelper
                 }
                 $typeNames = implode('|', $typeNameArray);
             }
-            if ($returnComment) {
-                $returnPart = sprintf('    :returns: `%s`', $returnComment);
-            } else {
-                $returnPart = sprintf('    :returns: `%s`', $typeNames);
-            }
         }
 
-        $methodHead = sprintf('..  php:method:: %s(%s)', $methodName, implode(', ', $parameterInSignature)) . "\n";
-        if ($noindexInClassMembers) {
-            $methodHead .= '    :noindex:' . "\n";
+        $modifiers = [];
+        $type = null;
+        if ($typeNames !== '') {
+            $type = new Type($typeNames);
         }
-
-        if ($includeMethodParameters) {
-            $methodHead .= $returnPart . "\n";
-        }
-        $methodHead .=  "\n";
-
-        $methodBody = StringHelper::indentMultilineText(implode('', $result), '    ');
 
         // SplFileObject locks the file, so null it when no longer needed
         $splFileObject = null;
-        return $methodHead . $methodBody;
+        //return $methodHead . $methodBody;
+        return new MethodMember(
+            $methodReflection->getName(),
+            $comment,
+            $modifiers,
+            $code,
+            $parameters,
+            $type,
+            str_replace("\n", '', $returnComment),
+            implode(', ', $parameterInSignature),
+        );
     }
 
     private static function escapeClassName(string $class)
