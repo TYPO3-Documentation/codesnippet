@@ -27,6 +27,7 @@ namespace T3docs\Codesnippet\Util;
  */
 use T3docs\Codesnippet\Exceptions\ClassNotPublicException;
 use Symfony\Component\Filesystem\Exception\FileNotFoundException;
+use T3docs\Codesnippet\Renderer\PhpDomainRenderer;
 use TYPO3\CMS\Core\Utility\ArrayUtility;
 
 /**
@@ -436,7 +437,7 @@ class Typo3CodeSnippets
         bool $allowDeprecated,
         bool $includeConstructor,
     ): string {
-        return ClassDocsHelper::extractDocsFromClass(
+        return PhpDomainRenderer::extractDocsFromClass(
             $class,
             $members,
             $withCode,
