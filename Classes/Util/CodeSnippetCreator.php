@@ -39,11 +39,8 @@ class CodeSnippetCreator
     private static $configPath = '';
 
     public function __construct(
-        private readonly PhpDomainRenderer $phpDomainRenderer
-    )
-    {
-    }
-
+        private readonly PhpDomainRenderer $phpDomainRenderer,
+    ) {}
 
     public function run(array $config, string $configPath): void
     {

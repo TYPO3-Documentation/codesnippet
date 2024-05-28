@@ -18,8 +18,6 @@ declare(strict_types=1);
 namespace T3docs\Codesnippet\Renderer;
 
 use T3docs\Codesnippet\Domain\Factory\ComponentFactory;
-use T3docs\Codesnippet\Domain\Factory\MemberFactory;
-use T3docs\Codesnippet\Domain\Factory\MethodFactory;
 use T3docs\Codesnippet\Exceptions\ClassNotPublicException;
 use T3docs\Codesnippet\Twig\AppExtension;
 use Twig\Environment;
@@ -29,12 +27,7 @@ class PhpDomainRenderer
 {
     public function __construct(
         private readonly ComponentFactory $componentFactory,
-        private readonly MemberFactory $memberFactory,
-        private readonly MethodFactory$methodFactory,
-    )
-    {
-    }
-
+    ) {}
 
     /**
      * Extract constants, properties and methods from class,
@@ -62,72 +55,7 @@ class PhpDomainRenderer
         }
         $modifierSum = $this->getModifierSum($allowedModifiers);
 
-        $constants = [];
-        $properties = [];
-        $methods = [];
-        if ($members) {
-            foreach ($members as $member) {
-                if ($reflectionClass->hasMethod($member)) {
-                    $methods[] = $this->methodFactory->getMethod(
-                        $reflectionClass,
-                        $member,
-                        $modifierSum,
-                        $allowInternal,
-                        $allowDeprecated,
-                        $includeConstructor,
-                    );
-                } elseif ($reflectionClass->hasProperty($member)) {
-                    $properties[] = $this->memberFactory->getProperty(
-                        $reflectionClass,
-                        $member,
-                        $modifierSum,
-                    );
-                } elseif ($reflectionClass->hasConstant($member)) {
-                    $constants[] = $this->memberFactory->getConstant(
-                        $reflectionClass,
-                        $member,
-                        $modifierSum,
-                    );
-                } else {
-                    throw new \ReflectionException(
-                        sprintf(
-                            'Cannot extract constant nor property nor method "%s" from class "%s"',
-                            $member,
-                            $class,
-                        ),
-                    );
-                }
-            }
-        } else {
-            foreach ($reflectionClass->getMethods() as $method) {
-                $methods[] = $this->methodFactory->getMethod(
-                    $reflectionClass,
-                    $method->getShortName(),
-                    $modifierSum,
-                    $allowInternal,
-                    $allowDeprecated,
-                    $includeConstructor,
-                );
-            }
-            foreach ($reflectionClass->getProperties() as $property) {
-                $properties[] = $this->memberFactory->getProperty(
-                    $reflectionClass,
-                    $property->getName(),
-                    $modifierSum,
-                );
-            }
-            foreach ($reflectionClass->getConstants() as $constant => $constantValue) {
-                $constants[] = $this->memberFactory->getConstant(
-                    $reflectionClass,
-                    $constant,
-                    $modifierSum,
-                );
-            }
-        }
-
-        $constants = array_filter($constants, fn($item) => $item !== null);
-        $properties = array_filter($properties, fn($item) => $item !== null);
-        $methods = array_filter($methods, fn($item) => $item !== null);
+        [$constants, $properties, $methods] = $this->componentFactory->extractMembers($members, $reflectionClass, $modifierSum, $allowInternal, $allowDeprecated, $includeConstructor, $class);
 
         $loader = new FilesystemLoader(__DIR__ . '/../../Resources/Private/Templates/');
         $twig = new Environment($loader, [
@@ -162,7 +90,6 @@ class PhpDomainRenderer
     }
 
     /**
-     * @param mixed $allowedModifiers
      * @return int|string
      */
     public function getModifierSum(mixed $allowedModifiers): string|int
@@ -197,5 +124,4 @@ class PhpDomainRenderer
             && str_contains($reflectionClass->getDocComment(), '* @internal');
         return $isInternal;
     }
-
 }

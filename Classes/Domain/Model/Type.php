@@ -15,7 +15,7 @@
 
 namespace T3docs\Codesnippet\Domain\Model;
 
-class Type
+class Type implements \Stringable
 {
     public function __construct(
         public readonly string $name,
