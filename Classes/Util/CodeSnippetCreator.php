@@ -25,6 +25,8 @@ namespace T3docs\Codesnippet\Util;
  *
  * The TYPO3 project - inspiring people to share!
  */
+
+use T3docs\Codesnippet\Renderer\PhpDomainRenderer;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use T3docs\Codesnippet\Exceptions\InvalidConfigurationException;
 
@@ -36,6 +38,13 @@ class CodeSnippetCreator
     private static $fileCount = 0;
     private static $configPath = '';
 
+    public function __construct(
+        private readonly PhpDomainRenderer $phpDomainRenderer
+    )
+    {
+    }
+
+
     public function run(array $config, string $configPath): void
     {
         self::$configPath =  $configPath;
@@ -45,7 +54,7 @@ class CodeSnippetCreator
             if (is_array($entry) && $entry['action']) {
                 switch ($entry['action']) {
                     case 'createPhpClassDocs':
-                        $content = ClassDocsHelper::extractPhpDomain($entry);
+                        $content = $this->phpDomainRenderer->extractPhpDomain($entry);
                         static::writeFile($entry, $content);
                         break;
                     case 'createCodeSnippet':
