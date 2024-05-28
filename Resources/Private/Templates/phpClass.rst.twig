@@ -11,7 +11,7 @@
 {% endfor %}
 
 {% if settings.includeClassComment and component.description -%}
-    {{ component.description }}
+    {{-  indent_multiline_text(component.description, 1) }}
 
 {% endif -%}
 

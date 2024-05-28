@@ -1,8 +1,22 @@
 <?php
 
+/*
+ * This file is part of the TYPO3 CMS project.
+ *
+ * It is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License, either version 2
+ * of the License, or any later version.
+ *
+ * For the full copyright and license information, please read the
+ * LICENSE.txt file that was distributed with this source code.
+ *
+ * The TYPO3 project - inspiring people to share!
+ */
+
 namespace T3docs\Codesnippet\Domain\Factory;
 
 use phpDocumentor\Reflection\DocBlockFactory;
+use phpDocumentor\Reflection\DocBlockFactoryInterface;
 use T3docs\Codesnippet\Domain\Model\MethodMember;
 use T3docs\Codesnippet\Domain\Model\Parameter;
 use T3docs\Codesnippet\Domain\Model\Type;
@@ -12,10 +26,13 @@ use T3docs\Codesnippet\Utility\PhpDocToRstUtility;
 
 class MethodFactory
 {
-    /**
-     * @var DocBlockFactory
-     */
-    private static $docBlockFactory;
+    private DocBlockFactoryInterface $docBlockFactory;
+
+    public function __construct()
+    {
+        $this->docBlockFactory = DocBlockFactory::createInstance();
+    }
+
     /**
      * Extract method from class
      *
@@ -47,7 +64,6 @@ class MethodFactory
         ) {
             return null;
         }
-        $docBlockFactory = self::getDocBlockFactory();
 
         if (!$methodReflection->getFileName()) {
             return null;
@@ -119,7 +135,7 @@ class MethodFactory
         $returnComment = '';
         if ($docComment) {
             try {
-                $docBlock = $docBlockFactory->create($docComment);
+                $docBlock = $this->docBlockFactory->create($docComment);
                 $deprecations = $docBlock->getTagsByName('deprecated');
                 foreach ($deprecations as $deprecation) {
                     $comment .= '**Deprecated:** ' . $deprecation . "\n\n";
@@ -138,6 +154,9 @@ class MethodFactory
                 if (is_array($paramArray) && count($paramArray) > 0) {
                     foreach ($paramArray as $param) {
                         $paramCommentExplode = explode(' ', $param->render(), 4);
+                        $paramName = null;
+                        $type = null;
+                        $description = '';
                         if (count($paramCommentExplode) > 2) {
                             $paramName = $paramCommentExplode[2];
                             $type = $paramCommentExplode[1];
@@ -185,11 +204,11 @@ class MethodFactory
                 $modifiers['passedByReference'] = $param['passedByReference'];
             }
             $parameters[] = new Parameter(
-                new Type($param['nullable'].$param['type']),
+                new Type($param['nullable'] . $param['type']),
                 $param['name'],
                 str_replace("\n", '', $param['description']),
                 $param['default'],
-                $modifiers
+                $modifiers,
             );
         }
         $codeResult = [];
@@ -238,15 +257,6 @@ class MethodFactory
         );
     }
 
-    private function getDocBlockFactory(): DocBlockFactory
-    {
-        if (!isset(self::$docBlockFactory)) {
-            self::$docBlockFactory = DocBlockFactory::createInstance();
-        }
-
-        return self::$docBlockFactory;
-    }
-
     private function getFullQualifiedClassNameIfPossible(string $className): string
     {
         try {
@@ -258,5 +268,4 @@ class MethodFactory
 
         return $className;
     }
-
 }

@@ -20,33 +20,17 @@ use phpDocumentor\Reflection\DocBlockFactoryInterface;
 use T3docs\Codesnippet\Domain\Model\ClassComponent;
 use T3docs\Codesnippet\Domain\Model\Component;
 use T3docs\Codesnippet\Domain\Model\InterfaceComponent;
-use T3docs\Codesnippet\Util\StringHelper;
 use T3docs\Codesnippet\Utility\PhpDocToRstUtility;
-use TYPO3\CMS\Extbase\Reflection\DocBlock\Tags\Null_;
 
 class ComponentFactory
 {
     private DocBlockFactoryInterface $docBlockFactory;
-    public function __construct()
-    {
+
+    public function __construct(
+        private readonly MemberFactory $memberFactory,
+        private readonly MethodFactory $methodFactory,
+    ) {
         $this->docBlockFactory = DocBlockFactory::createInstance();
-        $this->docBlockFactory->registerTagHandler('author', Null_::class);
-        $this->docBlockFactory->registerTagHandler('covers', Null_::class);
-        $this->docBlockFactory->registerTagHandler('deprecated', Null_::class);
-        $this->docBlockFactory->registerTagHandler('link', Null_::class);
-        $this->docBlockFactory->registerTagHandler('method', Null_::class);
-        $this->docBlockFactory->registerTagHandler('property-read', Null_::class);
-        $this->docBlockFactory->registerTagHandler('property', Null_::class);
-        $this->docBlockFactory->registerTagHandler('property-write', Null_::class);
-        $this->docBlockFactory->registerTagHandler('return', Null_::class);
-        $this->docBlockFactory->registerTagHandler('see', Null_::class);
-        $this->docBlockFactory->registerTagHandler('since', Null_::class);
-        $this->docBlockFactory->registerTagHandler('source', Null_::class);
-        $this->docBlockFactory->registerTagHandler('throw', Null_::class);
-        $this->docBlockFactory->registerTagHandler('throws', Null_::class);
-        $this->docBlockFactory->registerTagHandler('uses', Null_::class);
-        $this->docBlockFactory->registerTagHandler('var', Null_::class);
-        $this->docBlockFactory->registerTagHandler('version', Null_::class);
     }
 
     public function createComponent(\ReflectionClass $reflectionClass): Component
@@ -60,8 +44,8 @@ class ComponentFactory
     private function createInterface(\ReflectionClass $reflectionClass): InterfaceComponent
     {
         return new InterfaceComponent(
-            $this->getNamespace($reflectionClass),
-            $this->getShortname($reflectionClass),
+            $reflectionClass->getNamespaceName(),
+            $reflectionClass->getShortName(),
             $this->getInterfaceModifiers($reflectionClass),
             $this->getDescription($reflectionClass),
         );
@@ -70,21 +54,136 @@ class ComponentFactory
     private function createClass(\ReflectionClass $reflectionClass): ClassComponent
     {
         return new ClassComponent(
-            $this->getNamespace($reflectionClass),
-            $this->getShortname($reflectionClass),
+            $reflectionClass->getNamespaceName(),
+            $reflectionClass->getShortName(),
             $this->getClassModifiers($reflectionClass),
             $this->getDescription($reflectionClass),
         );
     }
 
-    private function getNamespace(\ReflectionClass $reflectionClass): string
-    {
-        return $reflectionClass->getNamespaceName();
+    /**
+     * @param string[] $members
+     * @return array
+     * @throws \ReflectionException
+     */
+    public function extractMembers(
+        array $members,
+        \ReflectionClass $reflectionClass,
+        int $modifierSum,
+        bool $allowInternal,
+        bool $allowDeprecated,
+        bool $includeConstructor,
+        string $class,
+    ): array {
+        $constants = [];
+        $properties = [];
+        $methods = [];
+        if ($members !== []) {
+            $this->extractDefinedMembers($members, $reflectionClass, $modifierSum, $allowInternal, $allowDeprecated, $includeConstructor, $methods, $properties, $constants, $class);
+        } else {
+            $this->extractAllMembers($reflectionClass, $modifierSum, $allowInternal, $allowDeprecated, $includeConstructor, $methods, $properties, $constants);
+        }
+
+        $constants = array_filter($constants, fn($item) => $item !== null);
+        $properties = array_filter($properties, fn($item) => $item !== null);
+        $methods = array_filter($methods, fn($item) => $item !== null);
+        return [$constants, $properties, $methods];
     }
 
-    private function getShortname(\ReflectionClass $reflectionClass): string
-    {
-        return $reflectionClass->getShortName();
+    /**
+     * @param string[] $members
+     * @param array $methods
+     * @param array $properties
+     * @param array $constants
+     * @return array
+     * @throws \ReflectionException
+     */
+    public function extractDefinedMembers(
+        array $members,
+        \ReflectionClass $reflectionClass,
+        int $modifierSum,
+        bool $allowInternal,
+        bool $allowDeprecated,
+        bool $includeConstructor,
+        array &$methods,
+        array &$properties,
+        array &$constants,
+        string $class,
+    ): void {
+        foreach ($members as $member) {
+            if ($reflectionClass->hasMethod($member)) {
+                $methods[] = $this->methodFactory->getMethod(
+                    $reflectionClass,
+                    $member,
+                    $modifierSum,
+                    $allowInternal,
+                    $allowDeprecated,
+                    $includeConstructor,
+                );
+            } elseif ($reflectionClass->hasProperty($member)) {
+                $properties[] = $this->memberFactory->getProperty(
+                    $reflectionClass,
+                    $member,
+                    $modifierSum,
+                );
+            } elseif ($reflectionClass->hasConstant($member)) {
+                $constants[] = $this->memberFactory->getConstant(
+                    $reflectionClass,
+                    $member,
+                    $modifierSum,
+                );
+            } else {
+                throw new \ReflectionException(
+                    sprintf(
+                        'Cannot extract constant nor property nor method "%s" from class "%s"',
+                        $member,
+                        $class,
+                    ),
+                );
+            }
+        }
+    }
+
+    /**
+     * @param array $methods
+     * @param array $properties
+     * @param array $constants
+     * @return array
+     */
+    public function extractAllMembers(
+        \ReflectionClass $reflectionClass,
+        int $modifierSum,
+        bool $allowInternal,
+        bool $allowDeprecated,
+        bool $includeConstructor,
+        array &$methods,
+        array &$properties,
+        array &$constants,
+    ): void {
+        foreach ($reflectionClass->getMethods() as $method) {
+            $methods[] = $this->methodFactory->getMethod(
+                $reflectionClass,
+                $method->getShortName(),
+                $modifierSum,
+                $allowInternal,
+                $allowDeprecated,
+                $includeConstructor,
+            );
+        }
+        foreach ($reflectionClass->getProperties() as $property) {
+            $properties[] = $this->memberFactory->getProperty(
+                $reflectionClass,
+                $property->getName(),
+                $modifierSum,
+            );
+        }
+        foreach ($reflectionClass->getConstants() as $constant => $constantValue) {
+            $constants[] = $this->memberFactory->getConstant(
+                $reflectionClass,
+                $constant,
+                $modifierSum,
+            );
+        }
     }
 
     /**
@@ -119,10 +218,6 @@ class ComponentFactory
             $comment .= "\n\n" . $docBlock->getDescription()->render();
         }
         $comment = PhpDocToRstUtility::convertComment($comment);
-
-        if ($comment !== '') {
-            $comment = StringHelper::indentMultilineText($comment, '    ') . "\n\n";
-        }
 
         return $comment;
     }

@@ -17,17 +17,7 @@ declare(strict_types=1);
 
 namespace T3docs\Codesnippet\Util;
 
-/*
- * This file is part of the TYPO3 project.
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- *
- * The TYPO3 project - inspiring people to share!
- */
-use T3docs\Codesnippet\Exceptions\ClassNotPublicException;
 use Symfony\Component\Filesystem\Exception\FileNotFoundException;
-use T3docs\Codesnippet\Renderer\PhpDomainRenderer;
 use TYPO3\CMS\Core\Utility\ArrayUtility;
 
 /**
@@ -224,50 +214,6 @@ class Typo3CodeSnippets
     }
 
     /**
-     * Reads a TYPO3 PHP class file and generates a reST file from it for inclusion.
-     *
-     * @param string $class Name of PHP class,
-     *                      e.g. "TYPO3\CMS\Core\Cache\Backend\FileBackend"
-     * @param string $targetFileName File path without file extension of reST file relative to code snippets target folder,
-     *                              e.g. "FileBackendFreeze"
-     * @param array $members Extract these members (constants, properties and methods) from the PHP class,
-     *                              e.g. ["frozen", "freeze"]
-     * @param bool $withCode Include the complete method as code example?
-     * @param array $allowedModifiers Members must have this modifier to be allowed
-     *                              e.g. ["public", "protected"]
-     * @param bool $allowInternal Include Internal methods?
-     * @param bool $allowDeprecated Include Deprecated methods?
-     */
-    public function createPhpClassDocs(
-        string $class,
-        string $targetFileName,
-        array $members = [],
-        bool $withCode = false,
-        array $allowedModifiers = ['public'],
-        bool $allowInternal = false,
-        bool $allowDeprecated = false,
-        bool $includeConstructor = false,
-    ): void {
-        $relativeTargetPath = FileHelper::getRelativeTargetPath($targetFileName);
-        $absoluteTargetPath = FileHelper::getAbsoluteDocumentationPath($relativeTargetPath);
-
-        $code = $this->transformPhpToDocs(
-            $class,
-            $members,
-            $withCode,
-            $allowedModifiers,
-            $allowInternal,
-            $allowDeprecated,
-            $includeConstructor,
-        );
-        $this->writeRst(
-            $absoluteTargetPath,
-            $class,
-            $code,
-        );
-    }
-
-    /**
      * Reads a TYPO3 XML file and generates a reST file from it for inclusion.
      *
      * @param string $sourceFile File path of XML file relative to TYPO3 public folder,
@@ -422,30 +368,6 @@ class Typo3CodeSnippets
             $code = ArrayUtility::arrayExport($phpArray);
         }
         return $code;
-    }
-
-    /**
-     * @throws ClassNotPublicException
-     * @throws \ReflectionException
-     */
-    protected function transformPhpToDocs(
-        string $class,
-        array $members,
-        bool $withCode,
-        array $allowedModifiers,
-        bool $allowInternal,
-        bool $allowDeprecated,
-        bool $includeConstructor,
-    ): string {
-        return PhpDomainRenderer::extractDocsFromClass(
-            $class,
-            $members,
-            $withCode,
-            $allowedModifiers,
-            $allowInternal,
-            $allowDeprecated,
-            $includeConstructor,
-        );
     }
 
     protected function readPhpClass(array $config): string
