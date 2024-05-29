@@ -1,0 +1,8 @@
+..  php:namespace::  TYPO3\CMS\Core\Core\Event
+
+..  php:class:: BootCompletedEvent
+
+    Executed when TYPO3 has fully booted (after all ext_tables.php files have been processed)
+
+    ..  php:method:: isCachingEnabled()
+        :returns: `bool`

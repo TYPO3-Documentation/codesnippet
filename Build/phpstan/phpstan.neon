@@ -10,6 +10,7 @@ parameters:
   paths:
     - ../../Classes/
     - ../../Configuration/
+    - ../../Tests/
 
   inferPrivatePropertyTypeFromConstructor: true
   treatPhpDocTypesAsCertain: false

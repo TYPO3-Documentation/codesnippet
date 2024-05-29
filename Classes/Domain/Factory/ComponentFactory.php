@@ -29,6 +29,7 @@ class ComponentFactory
     public function __construct(
         private readonly MemberFactory $memberFactory,
         private readonly MethodFactory $methodFactory,
+        private readonly PropertyFactory $propertyFactory,
     ) {
         $this->docBlockFactory = DocBlockFactory::createInstance();
     }
@@ -121,7 +122,7 @@ class ComponentFactory
                     $includeConstructor,
                 );
             } elseif ($reflectionClass->hasProperty($member)) {
-                $properties[] = $this->memberFactory->getProperty(
+                $properties[] = $this->propertyFactory->getProperty(
                     $reflectionClass,
                     $member,
                     $modifierSum,
@@ -171,7 +172,7 @@ class ComponentFactory
             );
         }
         foreach ($reflectionClass->getProperties() as $property) {
-            $properties[] = $this->memberFactory->getProperty(
+            $properties[] = $this->propertyFactory->getProperty(
                 $reflectionClass,
                 $property->getName(),
                 $modifierSum,

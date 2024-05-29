@@ -16,5 +16,12 @@ services:
         # not required, defaults to false
         hidden: false
 
+  T3docs\Codesnippet\Util\CodeSnippetCreator:
+    public: true
+
+  T3docs\Codesnippet\Renderer\PhpDomainRenderer:
+    public: true
+
+
   T3docs\Codesnippet\Twig\AppExtension:
     tags: ['twig.extension']
