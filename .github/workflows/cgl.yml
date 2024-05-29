@@ -66,6 +66,9 @@ jobs:
       - name: CGL
         run: Build/Scripts/runTests.sh -t ${{ matrix.core }} -p ${{ matrix.php }} -s cgl -n
 
+      - name: phpstan
+        run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -s phpstan
+
   xliff-lint:
     name: "XLIFF linter"
     runs-on: ubuntu-latest

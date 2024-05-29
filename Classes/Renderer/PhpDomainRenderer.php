@@ -86,7 +86,12 @@ class PhpDomainRenderer
         ];
 
         // Render the template
-        return $twig->render('phpClass.rst.twig', $context);
+        $result = $twig->render('phpClass.rst.twig', $context);
+        // Remove trailing whitespace from each line
+        $result = preg_replace('/[ \t]+$/m', '', $result);
+        // Remove duplicate empty lines
+        $result = preg_replace('/^\h*\v+/m', "\n", $result);
+        return $result;
     }
 
     /**

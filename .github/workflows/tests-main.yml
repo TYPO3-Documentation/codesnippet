@@ -24,3 +24,6 @@ jobs:
 
       - name: Unit Tests
         run: Build/Scripts/runTests.sh -t main -p ${{ matrix.php }} -s unit
+
+      - name: Unit Tests
+        run: Build/Scripts/runTests.sh -t main -p ${{ matrix.php }} -s functional
