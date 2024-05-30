@@ -16,8 +16,6 @@
 namespace T3docs\Codesnippet\Tests\Functional;
 
 use T3docs\Codesnippet\Renderer\PhpDomainRenderer;
-use TYPO3\CMS\Core\Authentication\MimicServiceInterface;
-use TYPO3\CMS\Core\Core\Event\BootCompletedEvent;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 class PhpDomainRendererTest extends ExtensionTestCase
@@ -32,8 +30,9 @@ class PhpDomainRendererTest extends ExtensionTestCase
     /**
      * @dataProvider extractClassProvider
      */
-    public function testExtractClass(array $config, string $expectedFile): void
+    public function testExtractClass(string $configFile, string $expectedFile): void
     {
+        $config = include __DIR__ . '/Fixtures/config/' . $configFile;
         $result = $this->phpDomainRendererTest->extractPhpDomain($config);
         $expected = file_get_contents(__DIR__ . '/Fixtures/results/' . $expectedFile);
         self::assertEquals(trim($expected), trim($result));
@@ -43,22 +42,15 @@ class PhpDomainRendererTest extends ExtensionTestCase
     {
         return [
             [
-                [
-                    'class' => BootCompletedEvent::class,
-                ],
+                'BootCompletedEvent.php',
                 'BootCompletedEvent.rst',
             ],
             [
-                [
-                    'class' => BootCompletedEvent::class,
-                    'members' => ['isCachingEnabled'],
-                ],
-                'BootCompletedEvent.rst',
+                'BootCompletedEvent2.php',
+                'BootCompletedEvent2.rst',
             ],
             [
-                [
-                    'class' => MimicServiceInterface::class,
-                ],
+                'MimicServiceInterface.php',
                 'MimicServiceInterface.rst',
             ],
         ];
