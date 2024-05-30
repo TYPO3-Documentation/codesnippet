@@ -13,5 +13,5 @@
         would be processed during valid requests - e.g. perform password hashing (timing) or call
         remote services (network latency).
 
-        :returns: bool whether other services shall continue
+        :Return description: bool whether other services shall continue
 
