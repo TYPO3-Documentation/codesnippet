@@ -241,6 +241,8 @@ class MethodFactory
         if ($typeNames !== '') {
             $type = new Type($typeNames);
         }
+        $returnComment = str_replace($typeNames, '', $returnComment);
+        $returnComment = ucfirst(trim($returnComment));
 
         // SplFileObject locks the file, so null it when no longer needed
         $splFileObject = null;
