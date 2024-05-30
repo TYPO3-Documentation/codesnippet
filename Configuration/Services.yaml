@@ -13,8 +13,13 @@ services:
       - name: 'console.command'
         command: 'codesnippet:create'
         description: 'Create codesnippets'
-        # not required, defaults to false
-        hidden: false
+
+  T3docs\Codesnippet\Command\BaselineCommand:
+    public: true
+    tags:
+      - name: 'console.command'
+        command: 'codesnippet:baseline'
+        description: 'Create baseline for functional tests'
 
   T3docs\Codesnippet\Util\CodeSnippetCreator:
     public: true

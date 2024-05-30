@@ -47,6 +47,7 @@ Options:
             - composerUpdateRector: "composer update", for rector subdirectory
             - composerValidate: "composer validate"
             - functional: PHP functional tests
+            - functionalBaseline: Generate functional tests baseline
             - lint: PHP linting
             - phpstan: PHPStan static analysis
             - phpstanBaseline: Generate PHPStan baseline
@@ -424,6 +425,11 @@ case ${TEST_SUITE} in
                 SUITE_EXIT_CODE=$?
                 ;;
         esac
+        ;;
+    functionalBaseline)
+        COMMAND="php -dxdebug.mode=off .Build/bin/typo3 codesnippet:baseline"
+        ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name functional-${SUFFIX} -e COMPOSER_CACHE_DIR=.Build/.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} /bin/sh -c "${COMMAND}"
+        SUITE_EXIT_CODE=$?
         ;;
     lint)
         COMMAND="find . -name \\*.php ! -path "./.Build/\\*" -print0 | xargs -0 -n1 -P4 php -dxdebug.mode=off -l >/dev/null"

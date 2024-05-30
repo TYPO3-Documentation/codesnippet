@@ -15,8 +15,16 @@ test-cgl: ## Regenerate code snippets
 test-unit: ## Regenerate code snippets
 	Build/Scripts/runTests.sh -s unit -p 8.2
 
+.PHONY: test-functional
+test-functional: ## Run functional tests
+	Build/Scripts/runTests.sh -s functional
+
+.PHONY: functional-baseline
+test-functional-baseline: ## Run functional tests
+	Build/Scripts/runTests.sh -s functionalBaseline
+
 .PHONY: test
-test: test-lint test-cgl phpstan test-unit## Test the documentation rendering
+test: test-lint test-cgl phpstan test-unit test-functional## Test the documentation rendering
 
 .PHONY: rector
 rector: ## Run rector
