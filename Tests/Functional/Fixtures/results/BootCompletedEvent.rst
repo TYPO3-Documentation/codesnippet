@@ -6,3 +6,4 @@
 
     ..  php:method:: isCachingEnabled()
         :returns: `bool`
+
