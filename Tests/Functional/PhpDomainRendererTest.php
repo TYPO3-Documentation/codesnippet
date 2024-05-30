@@ -40,19 +40,23 @@ class PhpDomainRendererTest extends ExtensionTestCase
 
     public static function extractClassProvider(): array
     {
-        return [
-            [
-                'BootCompletedEvent.php',
-                'BootCompletedEvent.rst',
-            ],
-            [
-                'BootCompletedEvent2.php',
-                'BootCompletedEvent2.rst',
-            ],
-            [
-                'MimicServiceInterface.php',
-                'MimicServiceInterface.rst',
-            ],
-        ];
+        $configDir = __DIR__ . '/Fixtures/config/';
+        $resultDir = __DIR__ . '/Fixtures/results/';
+        $configFiles = glob($configDir . '*.php');
+        $testCases = [];
+
+        foreach ($configFiles as $configFilePath) {
+            $configFileName = basename($configFilePath);
+            $expectedFileName = str_replace('.php', '.rst', $configFileName);
+
+            if (file_exists($resultDir . $expectedFileName)) {
+                $testCases[] = [
+                    $configFileName,
+                    $expectedFileName,
+                ];
+            }
+        }
+
+        return $testCases;
     }
 }
