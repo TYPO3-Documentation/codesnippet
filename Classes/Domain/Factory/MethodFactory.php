@@ -85,23 +85,23 @@ class MethodFactory
         $parameterResolved = [];
         foreach ($parameters as $parameter) {
             $paramName = $parameter->getName();
-            $type = '';
+            $returnType = '';
             if ($parameter->getType() instanceof \ReflectionNamedType) {
-                $type = $parameter->getType()->getName();
+                $returnType = $parameter->getType()->getName();
             } elseif ($parameter->getType() instanceof \ReflectionUnionType) {
                 $types = $parameter->getType()->getTypes();
                 $typeNameArray = [];
-                foreach ($types as $type) {
-                    $typeNameArray[] = $type->getName();
+                foreach ($types as $returnType) {
+                    $typeNameArray[] = $returnType->getName();
                 }
-                $type = implode('|', $typeNameArray);
+                $returnType = implode('|', $typeNameArray);
             } elseif ($parameter->getType() instanceof \ReflectionIntersectionType) {
                 $types = $parameter->getType()->getTypes();
                 $typeNameArray = [];
                 foreach ($types as $typeElement) {
                     $typeNameArray[] = $typeElement->getName();
                 }
-                $type = implode('&', $typeNameArray);
+                $returnType = implode('&', $typeNameArray);
             }
             // Check if the parameter allows null
             $nullable = $parameter->allowsNull() ? '?' : '';
@@ -121,7 +121,7 @@ class MethodFactory
 
             $parameterResolved[] = [
                 'name' =>  '$' . $paramName,
-                'type' => $type,
+                'type' => $returnType,
                 'optional' => $optional,
                 'default' => $default,
                 'description' => '',
@@ -155,18 +155,18 @@ class MethodFactory
                     foreach ($paramArray as $param) {
                         $paramCommentExplode = explode(' ', $param->render(), 4);
                         $paramName = null;
-                        $type = null;
+                        $returnType = null;
                         $description = '';
                         if (count($paramCommentExplode) > 2) {
                             $paramName = $paramCommentExplode[2];
-                            $type = $paramCommentExplode[1];
+                            $returnType = $paramCommentExplode[1];
                             $description = $paramCommentExplode[3] ?? '';
                         }
                         foreach ($parameterResolved as $key => $paramResolved) {
                             if ($parameterResolved[$key]['name'] === $paramName) {
                                 // Type from method reflection is considered more accurate
                                 if (!$parameterResolved[$key]['type']) {
-                                    $parameterResolved[$key]['type'] = $type;
+                                    $parameterResolved[$key]['type'] = $returnType;
                                 }
                                 $parameterResolved[$key]['description'] = $description;
                             }
@@ -227,22 +227,29 @@ class MethodFactory
             } elseif ($returnType instanceof \ReflectionUnionType) {
                 $types = $returnType->getTypes();
                 $typeNameArray = [];
-                foreach ($types as $type) {
-                    $typeNameArray[] = $type->allowsNull()
-                        ? '?' . self::getFullQualifiedClassNameIfPossible($type->getName())
-                        : self::getFullQualifiedClassNameIfPossible($type->getName());
+                foreach ($types as $returnType) {
+                    $typeNameArray[] = $returnType->allowsNull()
+                        ? '?' . self::getFullQualifiedClassNameIfPossible($returnType->getName())
+                        : self::getFullQualifiedClassNameIfPossible($returnType->getName());
                 }
                 $typeNames = implode('|', $typeNameArray);
             }
         }
 
         $modifiers = [];
-        $type = null;
+        $returnType = null;
         if ($typeNames !== '') {
-            $type = new Type($typeNames);
+            $returnType = new Type($typeNames);
         }
-        $returnComment = str_replace($typeNames, '', $returnComment);
-        $returnComment = ucfirst(trim($returnComment));
+
+        if (str_starts_with($returnComment, $typeNames . ' ')) {
+            $returnComment = str_replace($typeNames . ' ', '', $returnComment);
+            $returnComment = ucfirst(trim($returnComment));
+        } elseif ($returnComment !== '') {
+            // It is probably a complex type declaration
+            $returnType = new Type($returnComment);
+            $returnComment = '';
+        }
 
         // SplFileObject locks the file, so null it when no longer needed
         $splFileObject = null;
@@ -253,7 +260,7 @@ class MethodFactory
             $modifiers,
             $code,
             $parameters,
-            $type,
+            $returnType,
             str_replace("\n", '', $returnComment),
             implode(', ', $parameterInSignature),
         );
