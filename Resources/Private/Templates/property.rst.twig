@@ -6,6 +6,6 @@
     :{{ modifier }}:
 {% endfor %}
 
-{% if settings.includeClassComment and property.description -%}
-    {{ property.description }}
+{% if settings.includeMemberComment and property.description -%}
+    {{-  indent_multiline_text(property.description, 1) }}
 {% endif %}
