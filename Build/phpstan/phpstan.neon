@@ -19,5 +19,5 @@ parameters:
 
   excludePaths:
     - '*/Build/node_modules'
-    - '../../ext_emconf.php'
+    - '*/ext_emconf.php'
 
