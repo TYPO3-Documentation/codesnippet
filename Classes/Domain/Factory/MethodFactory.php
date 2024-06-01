@@ -96,7 +96,7 @@ class MethodFactory
             }
         }
 
-        list($parameterInSignature, $parameters) = $this->getParameters($parameterResolved);
+        [$parameterInSignature, $parameters] = $this->getParameters($parameterResolved);
         $codeResult = [];
         for ($lineNumber = $startLineSignature; $lineNumber < $endLineBody; $lineNumber++) {
             $splFileObject->seek($lineNumber);
@@ -123,7 +123,7 @@ class MethodFactory
         }
 
         $modifiers = [];
-        list($returnType, $returnComment) = $this->extractTypeFromReturnComment($typeNames, $returnComment);
+        [$returnType, $returnComment] = $this->extractTypeFromReturnComment($typeNames, $returnComment);
 
         // SplFileObject locks the file, so null it when no longer needed
         $splFileObject = null;
