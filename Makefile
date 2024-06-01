@@ -40,3 +40,7 @@ phpstan-baseline: ## Run rector
 
 .PHONY: fix
 fix: rector test-cgl## Fix the code
+
+.PHONY: install
+install: ## Run composer update
+	Build/Scripts/runTests.sh -s composerUpdate

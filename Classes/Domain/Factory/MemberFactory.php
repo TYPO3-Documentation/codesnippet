@@ -15,25 +15,34 @@
 
 namespace T3docs\Codesnippet\Domain\Factory;
 
+use phpDocumentor\Reflection\DocBlockFactory;
+use phpDocumentor\Reflection\DocBlockFactoryInterface;
+use ReflectionClassConstant;
 use T3docs\Codesnippet\Domain\Model\ConstantMember;
-use T3docs\Codesnippet\Util\StringHelper;
 
 class MemberFactory
 {
+    private DocBlockFactoryInterface $docBlockFactory;
+
+    public function __construct()
+    {
+        $this->docBlockFactory = DocBlockFactory::createInstance();
+    }
     /**
      * Extract constant from class
      *
      * @param string $class Class name, e.g. "TYPO3\CMS\Core\Cache\Backend\FileBackend"
      * @param string $constant Constant name, e.g. "SEPARATOR"
      * @param bool $withCode Include the complete method as code example?
-     * @param int $modifierSum sum of all modifiers (i.e. \ReflectionMethod::IS_PUBLIC + \ReflectionMethod::IS_PROTECTED)
+     * @param int $modifierSumAllowed sum of all modifiers (i.e. \ReflectionMethod::IS_PUBLIC + \ReflectionMethod::IS_PROTECTED)
      */
     public function getConstant(
         \ReflectionClass $classReflection,
         string $constant,
-        int $modifierSum,
+        int $modifierSumAllowed,
     ): ConstantMember|null {
-        $constantReflection = $classReflection->getConstant($constant);
+        $constantReflection = new ReflectionClassConstant($classReflection->getName(), $constant);
+        $constantValue = $constantReflection->getValue();
 
         if (!$classReflection->getFileName()) {
             return null;
@@ -41,7 +50,20 @@ class MemberFactory
         $splFileObject = new \SplFileObject($classReflection->getFileName());
 
         $body = [];
-        $body[] = sprintf(':php:`%s`, type %s', var_export($constantReflection, true), gettype($constantReflection)) . "\n\n";
+        $body[] = sprintf(':php:`%s`, type %s', var_export($constantValue, true), gettype($constantValue)) . "\n\n";
+        $docComment = $constantReflection->getDocComment();
+        if ($docComment) {
+            try {
+                $docBlock = $this->docBlockFactory->create($docComment);
+                $body[] = $docBlock->getSummary();
+                if ($docBlock->getDescription()->render()) {
+                    $body[] =  "\n" . $docBlock->getDescription()->render();
+                }
+            } catch (\Exception) {
+                // doccomment cannot be interpreted
+                // keep data from method reflection
+            }
+        }
         $code = [];
 
         while (!$splFileObject->eof()) {
@@ -56,15 +78,21 @@ class MemberFactory
         }
         $modifiers = [];
         $code = implode('', $code);
-        if (str_contains($code, 'protected')) {
+        if ($constantReflection->isPublic()) {
+            $modifiers[] = 'public';
+        }
+        if ($constantReflection->isFinal()) {
+            $modifiers[] = 'final';
+        }
+        if ($constantReflection->isProtected()) {
             $modifiers[] = 'protected';
-            if (($modifierSum & \ReflectionMethod::IS_PROTECTED) == 0) {
+            if (($modifierSumAllowed & \ReflectionMethod::IS_PROTECTED) == 0) {
                 return null;
             }
         }
-        if (str_contains($code, 'private')) {
+        if ($constantReflection->isPrivate()) {
             $modifiers[] = 'private';
-            if (($modifierSum & \ReflectionMethod::IS_PRIVATE) == 0) {
+            if (($modifierSumAllowed & \ReflectionMethod::IS_PRIVATE) == 0) {
                 return null;
             }
         }
@@ -77,7 +105,7 @@ class MemberFactory
         return new ConstantMember(
             null,
             $constant,
-            StringHelper::indentMultilineText(implode('', $body), '    '),
+            implode('', $body),
             $modifiers,
             $code,
             var_export($constantReflection, true),

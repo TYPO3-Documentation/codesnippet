@@ -36,7 +36,10 @@ class ConstExample
 
     /**
      * The mathematical constant PI.
+     * Of course this would go on forever
+     * and ever...
+     * and ever more...
      * @var float
      */
-    public const PI = 3.141592653589793;
+    final public const PI = 3.141592653589793;
 }
