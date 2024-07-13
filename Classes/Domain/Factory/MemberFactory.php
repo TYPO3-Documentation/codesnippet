@@ -17,7 +17,6 @@ namespace T3docs\Codesnippet\Domain\Factory;
 
 use phpDocumentor\Reflection\DocBlockFactory;
 use phpDocumentor\Reflection\DocBlockFactoryInterface;
-use ReflectionClassConstant;
 use T3docs\Codesnippet\Domain\Model\ConstantMember;
 
 class MemberFactory
@@ -41,7 +40,7 @@ class MemberFactory
         string $constant,
         int $modifierSumAllowed,
     ): ConstantMember|null {
-        $constantReflection = new ReflectionClassConstant($classReflection->getName(), $constant);
+        $constantReflection = new \ReflectionClassConstant($classReflection->getName(), $constant);
         $constantValue = $constantReflection->getValue();
 
         if (!$classReflection->getFileName()) {

@@ -28,6 +28,7 @@ namespace T3docs\Codesnippet\Tests\Unit\Service;
  * The TYPO3 project - inspiring people to share!
  */
 
+use PHPUnit\Framework\Attributes\Test;
 use T3docs\Codesnippet\Util\YamlHelper;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
@@ -36,9 +37,7 @@ use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
  */
 class YamlHelperTest extends UnitTestCase
 {
-    /**
-     * @test
-     */
+    #[Test]
     public function extractNodesFromYamlExtracts2Keys(): void
     {
         $input = <<<'NOWDOC'
@@ -60,9 +59,7 @@ NOWDOC;
         self::assertEquals($expected, YamlHelper::extractFieldsFromYaml($input, $xPaths));
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function extractNodesFromXmlInlineLevel2FormatsSubkeysInOneLineEach(): void
     {
         $input = <<<'NOWDOC'

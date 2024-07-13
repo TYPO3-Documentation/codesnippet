@@ -28,6 +28,7 @@ namespace T3docs\Codesnippet\Tests\Unit\Service;
  * The TYPO3 project - inspiring people to share!
  */
 
+use PHPUnit\Framework\Attributes\Test;
 use T3docs\Codesnippet\Util\XmlHelper;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
@@ -36,9 +37,7 @@ use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
  */
 class XmlHelperTest extends UnitTestCase
 {
-    /**
-     * @test
-     */
+    #[Test]
     public function extractNodesFromXmlExtractsLeavesOnLevel3(): void
     {
         $input = <<<'NOWDOC'
@@ -65,9 +64,7 @@ NOWDOC;
         self::assertEquals($expected, XmlHelper::extractNodesFromXml($input, $xPaths));
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function extractNodesFromXmlExtractsNodeWithSubnodes(): void
     {
         $input = <<<'NOWDOC'

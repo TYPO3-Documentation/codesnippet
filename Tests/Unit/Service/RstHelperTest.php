@@ -28,6 +28,7 @@ namespace T3docs\Codesnippet\Tests\Unit\Service;
  * The TYPO3 project - inspiring people to share!
  */
 
+use PHPUnit\Framework\Attributes\Test;
 use T3docs\Codesnippet\Util\RstHelper;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
@@ -36,9 +37,7 @@ use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
  */
 class RstHelperTest extends UnitTestCase
 {
-    /**
-     * @test
-     */
+    #[Test]
     public function escapeRstDuplicateABackslash(): void
     {
         $input = '\\Lorem\\Ipsum\\';
@@ -46,9 +45,7 @@ class RstHelperTest extends UnitTestCase
         self::assertEquals($expected, RstHelper::escapeRst($input));
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function escapeRstDuplicatesAllBackslashes(): void
     {
         $input = '\\Lorem\\Ipsum\\';

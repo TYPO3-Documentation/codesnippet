@@ -28,6 +28,7 @@ namespace T3docs\Codesnippet\Tests\Unit\Service;
  * The TYPO3 project - inspiring people to share!
  */
 
+use PHPUnit\Framework\Attributes\Test;
 use T3docs\Codesnippet\Util\ArrayHelper;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
@@ -36,9 +37,7 @@ use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
  */
 class ArrayHelperTest extends UnitTestCase
 {
-    /**
-     * @test
-     */
+    #[Test]
     public function extractFieldsExtractsSelectedFieldsWith3LevelPath(): void
     {
         $inputArray = [
@@ -63,9 +62,7 @@ class ArrayHelperTest extends UnitTestCase
         self::assertEquals($expected, ArrayHelper::extractFieldsFromArray($inputArray, $fields));
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function extractFieldsExtractsSelectedFieldWithSubArray(): void
     {
         $inputArray = [
@@ -95,18 +92,14 @@ class ArrayHelperTest extends UnitTestCase
         self::assertEquals($expected, ArrayHelper::extractFieldsFromArray($inputArray, $fields));
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function varExportArrayShortExportsEmptyArrayInShortSyntax(): void
     {
         $inputArray = [];
         $expected = '[]';
         self::assertEquals($expected, ArrayHelper::varExportArrayShort($inputArray));
     }
-    /**
-     * @test
-     */
+    #[Test]
     public function varExportArrayShortExportsStringStringArrayInShortSyntax(): void
     {
         $inputArray = ['label' => 'title'];
@@ -118,9 +111,7 @@ class ArrayHelperTest extends UnitTestCase
 NOWDOC;
         self::assertEquals($expected, ArrayHelper::varExportArrayShort($inputArray));
     }
-    /**
-     * @test
-     */
+    #[Test]
     public function varExportArrayShortExportsUnnamedArrayInShortSyntax(): void
     {
         $inputArray = ['title'];
@@ -132,9 +123,7 @@ NOWDOC;
 NOWDOC;
         self::assertEquals($expected, ArrayHelper::varExportArrayShort($inputArray));
     }
-    /**
-     * @test
-     */
+    #[Test]
     public function varExportArrayShortExportsMultipleValueArrayInShortSyntaxEachValueInNewLine(): void
     {
         $inputArray = [
@@ -151,9 +140,7 @@ NOWDOC;
 NOWDOC;
         self::assertEquals($expected, ArrayHelper::varExportArrayShort($inputArray));
     }
-    /**
-     * @test
-     */
+    #[Test]
     public function varExportArrayShortExportsMultiLevelArrayInShortSyntaxEachLevelIndented(): void
     {
         $inputArray = [
@@ -184,36 +171,28 @@ NOWDOC;
 NOWDOC;
         self::assertEquals($expected, ArrayHelper::varExportArrayShort($inputArray));
     }
-    /**
-     * @test
-     */
+    #[Test]
     public function varExportArrayShortExportsStringAsString(): void
     {
         $inputArray = 'label';
         $expected = "'label'";
         self::assertEquals($expected, ArrayHelper::varExportArrayShort($inputArray));
     }
-    /**
-     * @test
-     */
+    #[Test]
     public function varExportArrayShortExportsIntegerAsInteger(): void
     {
         $inputArray = 42;
         $expected = '42';
         self::assertEquals($expected, ArrayHelper::varExportArrayShort($inputArray));
     }
-    /**
-     * @test
-     */
+    #[Test]
     public function varExportArrayShortExportsNullAsNull(): void
     {
         $inputArray = null;
         $expected = 'NULL';
         self::assertEquals($expected, ArrayHelper::varExportArrayShort($inputArray));
     }
-    /**
-     * @test
-     */
+    #[Test]
     public function varExportArrayShortExportsFalseAsFalse(): void
     {
         $inputArray = false;

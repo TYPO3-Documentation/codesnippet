@@ -28,6 +28,7 @@ namespace T3docs\Codesnippet\Tests\Unit\Service;
  * The TYPO3 project - inspiring people to share!
  */
 
+use PHPUnit\Framework\Attributes\Test;
 use T3docs\Codesnippet\Util\StringHelper;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
@@ -36,9 +37,7 @@ use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
  */
 class StringHelperTest extends UnitTestCase
 {
-    /**
-     * @test
-     */
+    #[Test]
     public function indentMultilineTextIndentsOneLine(): void
     {
         $input = 'Lorem Ipsum Dolor';
