@@ -15,6 +15,7 @@
 
 namespace T3docs\Codesnippet\Tests\Functional;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use T3docs\Codesnippet\Renderer\PhpDomainRenderer;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
@@ -27,9 +28,7 @@ class PhpDomainRendererTest extends ExtensionTestCase
         $this->phpDomainRendererTest = GeneralUtility::makeInstance(PhpDomainRenderer::class);
     }
 
-    /**
-     * @dataProvider extractClassProvider
-     */
+    #[DataProvider('extractClassProvider')]
     public function testExtractClass(string $configFile, string $expectedFile): void
     {
         $config = include __DIR__ . '/Fixtures/config/' . $configFile;
