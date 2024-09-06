@@ -105,8 +105,11 @@ class CodeSnippetCreator
             throw new InvalidConfigurationException('No content found for file ' . $entry['targetFileName']);
         }
 
-        // Ensure no trailing whitespaces on empty lines
-        $content = preg_replace("/\n\s*\n/", "\n\n", $content);
+        // Remove trailing whitespace from lines and ensure no empty lines with only whitespace
+        $content = preg_replace("/[ \t]+$/m", '', $content); // Removes trailing spaces and tabs from each line
+
+        // Remove consecutive empty lines with or without whitespace
+        $content = preg_replace("/\n{2,}/", "\n\n", $content);
 
         // Ensure content ends with exactly one empty line
         $content = trim($content) . "\n";
