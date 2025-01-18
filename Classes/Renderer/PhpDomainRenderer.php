@@ -21,23 +21,36 @@ use T3docs\Codesnippet\Domain\Factory\ComponentFactory;
 use T3docs\Codesnippet\Exceptions\ClassNotPublicException;
 use T3docs\Codesnippet\Twig\AppExtension;
 use Twig\Environment;
+use Twig\Error\LoaderError;
+use Twig\Error\RuntimeError;
+use Twig\Error\SyntaxError;
 use Twig\Loader\FilesystemLoader;
 
-class PhpDomainRenderer
+class PhpDomainRenderer implements RendererInterface
 {
+    private const ACTION = 'createPhpClassDocs';
+
     public function __construct(
         private readonly ComponentFactory $componentFactory,
     ) {}
+
+    public function canRender(array $config): bool
+    {
+        return ($config['action'] ?? '') === self::ACTION;
+    }
 
     /**
      * Extract constants, properties and methods from class,
      * And renders them with a twig template
      *
      * @throws ClassNotPublicException
+     * @throws \ReflectionException
+     * @throws LoaderError
+     * @throws RuntimeError
+     * @throws SyntaxError
      */
-    public function extractPhpDomain(
-        array $config,
-    ): string {
+    public function render(array $config): string
+    {
         $class = $config['class'];
         $members = $config['members'] ?? [];
         $allowedModifiers = $config['allowedModifiers'] ?? ['public'];
@@ -76,6 +89,7 @@ class PhpDomainRenderer
             'includeMemberComment' => $includeMemberComment,
             'includeMethodParameters' => $includeMethodParameters,
         ];
+
         // Variables to pass to the template
         $context = [
             'component' => $component,
@@ -91,12 +105,10 @@ class PhpDomainRenderer
         $result = preg_replace('/[ \t]+$/m', '', $result);
         // Remove duplicate empty lines
         $result = preg_replace('/^\h*\v+/m', "\n", $result);
+
         return $result;
     }
 
-    /**
-     * @return int|string
-     */
     public function getModifierSum(mixed $allowedModifiers): string|int
     {
         $modifierSum = 0;
@@ -116,17 +128,13 @@ class PhpDomainRenderer
                 $modifierSum |= \ReflectionMethod::IS_STATIC;
             }
         }
+
         return $modifierSum;
     }
 
-    /**
-     * @param \ReflectionClass $reflectionClass
-     * @return bool
-     */
     public function isInternal(\ReflectionClass $reflectionClass): bool
     {
-        $isInternal = is_string($reflectionClass->getDocComment())
+        return is_string($reflectionClass->getDocComment())
             && str_contains($reflectionClass->getDocComment(), '* @internal');
-        return $isInternal;
     }
 }

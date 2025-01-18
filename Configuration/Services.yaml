@@ -21,12 +21,36 @@ services:
         command: 'codesnippet:baseline'
         description: 'Create baseline for functional tests'
 
-  T3docs\Codesnippet\Util\CodeSnippetCreator:
-    public: true
+  T3docs\Codesnippet\Renderer\CodeSnippetRenderer:
+    tags:
+      - name: 'codesnippet.renderer'
+
+  T3docs\Codesnippet\Renderer\JsonCodeSnippetRenderer:
+    tags:
+      - name: 'codesnippet.renderer'
+
+  T3docs\Codesnippet\Renderer\PhpArrayCodeSnippetRenderer:
+    tags:
+      - name: 'codesnippet.renderer'
+
+  T3docs\Codesnippet\Renderer\PhpClassCodeSnippetRenderer:
+    tags:
+      - name: 'codesnippet.renderer'
 
   T3docs\Codesnippet\Renderer\PhpDomainRenderer:
-    public: true
+    tags:
+      - name: 'codesnippet.renderer'
 
+#  T3docs\Codesnippet\Renderer\XmlCodeSnippetRenderer:
+#    tags:
+#      - name: 'codesnippet.renderer'
+
+#  T3docs\Codesnippet\Renderer\YamlCodeSnippetRenderer:
+#    tags:
+#      - name: 'codesnippet.renderer'
 
   T3docs\Codesnippet\Twig\AppExtension:
     tags: ['twig.extension']
+
+  T3docs\Codesnippet\Util\CodeSnippetCreator:
+    arguments: [ !tagged_iterator { tag: 'codesnippet.renderer' } ]

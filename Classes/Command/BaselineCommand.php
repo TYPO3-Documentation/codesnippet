@@ -45,6 +45,7 @@ class BaselineCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $this->generateBaseline();
+
         return Command::SUCCESS;
     }
 
@@ -62,7 +63,7 @@ class BaselineCommand extends Command
             $expectedFileName = str_replace('.php', '.rst', $configFileName);
             $config = include $configFilePath;
 
-            $result = $this->phpDomainRenderer->extractPhpDomain($config);
+            $result = $this->phpDomainRenderer->render($config);
 
             file_put_contents($resultDir . $expectedFileName, $result);
         }

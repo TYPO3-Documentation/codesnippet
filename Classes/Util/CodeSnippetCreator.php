@@ -26,7 +26,7 @@ namespace T3docs\Codesnippet\Util;
  * The TYPO3 project - inspiring people to share!
  */
 
-use T3docs\Codesnippet\Renderer\PhpDomainRenderer;
+use T3docs\Codesnippet\Renderer\RendererInterface;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use T3docs\Codesnippet\Exceptions\InvalidConfigurationException;
 
@@ -38,34 +38,35 @@ class CodeSnippetCreator
     private static $fileCount = 0;
     private static $configPath = '';
 
-    public function __construct(
-        private readonly PhpDomainRenderer $phpDomainRenderer,
-    ) {}
+    /**
+     * @var iterable|RendererInterface[]
+     */
+    private readonly iterable $codeSnippetRenderers;
+
+    public function __construct(iterable $codeSnippetRenderers)
+    {
+        $this->codeSnippetRenderers = $codeSnippetRenderers;
+    }
 
     public function run(array $config, string $configPath): void
     {
         self::$configPath =  $configPath;
-        $typo3CodeSnippets = new Typo3CodeSnippets();
         self::$fileCount = 0;
+
         foreach ($config as $entry) {
-            if (is_array($entry) && $entry['action']) {
+            if (is_array($entry) && isset($entry['action'])) {
+                $codeSnippetRenderer = $this->getCodeSnippetRenderer($entry);
+                if (!$codeSnippetRenderer instanceof RendererInterface) {
+                    continue;
+                }
+
+                static::writeFile(
+                    $entry,
+                    $codeSnippetRenderer->render($entry)
+                );
+                break;
+
                 switch ($entry['action']) {
-                    case 'createPhpClassDocs':
-                        $content = $this->phpDomainRenderer->extractPhpDomain($entry);
-                        static::writeFile($entry, $content);
-                        break;
-                    case 'createCodeSnippet':
-                        $content = $typo3CodeSnippets->createCodeSnippetFromConfig($entry);
-                        static::writeFile($entry, $content);
-                        break;
-                    case 'createPhpClassCodeSnippet':
-                        $content = $typo3CodeSnippets->createPhpClassCodeSnippet($entry);
-                        static::writeFile($entry, $content);
-                        break;
-                    case 'createPhpArrayCodeSnippet':
-                        $content = $typo3CodeSnippets->createPhpArrayCodeSnippetFromConfig($entry);
-                        static::writeFile($entry, $content);
-                        break;
                     case 'createJsonCodeSnippet':
                         $content = $typo3CodeSnippets->createJsonCodeSnippet($entry);
                         static::writeFile($entry, $content);
@@ -76,6 +77,17 @@ class CodeSnippetCreator
             }
         }
         echo self::$fileCount . ' Files created or overridden.' . "\n";
+    }
+
+    private function getCodeSnippetRenderer(array $config): ?RendererInterface
+    {
+        foreach ($this->codeSnippetRenderers as $codeSnippetRenderer) {
+            if ($codeSnippetRenderer->canRender($config)) {
+                return $codeSnippetRenderer;
+            }
+        }
+
+        return null;
     }
 
     public static function writeSimpleFile($content, $path): void
