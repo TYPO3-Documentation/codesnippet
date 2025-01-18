@@ -32,7 +32,7 @@ class PhpDomainRendererTest extends ExtensionTestCase
     public function testExtractClass(string $configFile, string $expectedFile): void
     {
         $config = include __DIR__ . '/Fixtures/config/' . $configFile;
-        $result = $this->phpDomainRendererTest->extractPhpDomain($config);
+        $result = $this->phpDomainRendererTest->render($config);
         $expected = file_get_contents(__DIR__ . '/Fixtures/results/' . $expectedFile);
         self::assertEquals(trim($expected), trim($result));
     }
