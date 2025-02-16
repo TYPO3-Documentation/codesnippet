@@ -64,16 +64,6 @@ class CodeSnippetCreator
                     $entry,
                     $codeSnippetRenderer->render($entry)
                 );
-                break;
-
-                switch ($entry['action']) {
-                    case 'createJsonCodeSnippet':
-                        $content = $typo3CodeSnippets->createJsonCodeSnippet($entry);
-                        static::writeFile($entry, $content);
-                        break;
-                    default:
-                        throw new InvalidConfigurationException('Unknown action: ' . $entry['action']);
-                }
             }
         }
         echo self::$fileCount . ' Files created or overridden.' . "\n";
