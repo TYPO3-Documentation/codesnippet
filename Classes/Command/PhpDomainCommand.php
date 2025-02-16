@@ -62,7 +62,7 @@ class PhpDomainCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        $pathToConfigFile = $this->getPathToConfigFile((string) $input->getArgument('config'));
+        $pathToConfigFile = $this->getPathToConfigFile((string)$input->getArgument('config'));
         $creatorConfiguration = $this->getCreatorConfiguration(
             $pathToConfigFile,
             $io,
