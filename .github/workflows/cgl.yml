@@ -18,7 +18,7 @@ jobs:
           - '8.3'
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       - name: Lint PHP
         run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -s lint
@@ -52,7 +52,7 @@ jobs:
             core: 'main'
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       - name: Install testing system
         run: Build/Scripts/runTests.sh -t ${{ matrix.core }} -p ${{ matrix.php }} -s composerUpdate
@@ -74,7 +74,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "Checkout"
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       - name: "XLIFF lint"
-        uses: TYPO3-Continuous-Integration/TYPO3-CI-Xliff-Lint@v1
+        uses: TYPO3-Continuous-Integration/TYPO3-CI-Xliff-Lint@ea1db1c5aeafbbc3c092ece90e5ecedf1f09ded9
