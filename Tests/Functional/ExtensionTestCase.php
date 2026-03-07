@@ -26,21 +26,12 @@ use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
  */
 abstract class ExtensionTestCase extends FunctionalTestCase
 {
-    public function __construct(string $name)
-    {
-        parent::__construct($name);
+    protected array $coreExtensionsToLoad = [
+        'install',
+    ];
 
-        // Shared core extensions to load
-        $this->coreExtensionsToLoad = [
-            ...array_values($this->coreExtensionsToLoad),
-            'install',
-        ];
-
-        // Shared extension to load
-        $this->testExtensionsToLoad = [
-            ...array_values($this->testExtensionsToLoad),
-            't3docs/codesnippet',
-            'typo3tests/example-extension',
-        ];
-    }
+    protected array $testExtensionsToLoad = [
+        't3docs/codesnippet',
+        'typo3tests/example-extension',
+    ];
 }
