@@ -1,7 +1,9 @@
-name: tests 13.1
+name: tests 13.4
 
 on:
   push:
+    branches:
+      - main
   pull_request:
   schedule:
     - cron:  '56 4 * * *'
@@ -15,15 +17,17 @@ jobs:
         php:
           - '8.2'
           - '8.3'
+          - '8.4'
+          - '8.5'
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       - name: Install testing system
-        run: Build/Scripts/runTests.sh -t 13.1 -p ${{ matrix.php }} -s composerUpdate
+        run: Build/Scripts/runTests.sh -t 13.4 -p ${{ matrix.php }} -s composerUpdate
 
       - name: Unit Tests
-        run: Build/Scripts/runTests.sh -t 13.1 -p ${{ matrix.php }} -s unit
+        run: Build/Scripts/runTests.sh -t 13.4 -p ${{ matrix.php }} -s unit
 
-      - name: Unit Tests
-        run: Build/Scripts/runTests.sh -t 13.1 -p ${{ matrix.php }} -s functional
+      - name: Functional Tests
+        run: Build/Scripts/runTests.sh -t 13.4 -p ${{ matrix.php }} -s functional
