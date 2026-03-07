@@ -14,7 +14,7 @@
  */
 
 return [
-    'class' => \TYPO3\CMS\Core\Routing\PageArguments::class,
+    'class' => \TYPO3Tests\ExampleExtension\MethodExample::class,
     'members' => [
         'get',
         'getDynamicArguments',

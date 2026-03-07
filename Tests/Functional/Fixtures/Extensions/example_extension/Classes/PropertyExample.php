@@ -13,12 +13,12 @@
  * The TYPO3 project - inspiring people to share!
  */
 
-use TYPO3Tests\ExampleExtension\PropertyExample;
+namespace TYPO3Tests\ExampleExtension;
 
-return [
-    'class' => PropertyExample::class,
-    'members' => [
-        'lang',
-    ],
-    'includeClassComment' => false,
-];
+class PropertyExample
+{
+    /**
+     * This is set to the language that is currently running for the user
+     */
+    public string $lang = 'default';
+}

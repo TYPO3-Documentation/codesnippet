@@ -1,6 +1,6 @@
-..  php:namespace::  TYPO3\CMS\Core\Routing
+..  php:namespace::  TYPO3Tests\ExampleExtension
 
-..  php:class:: PageArguments
+..  php:class:: MethodExample
 
     Contains all resolved parameters when a page is resolved from a page path segment plus all fragments.
 

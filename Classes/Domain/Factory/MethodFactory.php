@@ -87,6 +87,10 @@ class MethodFactory
                 $returnComment = '';
                 if (is_array($returnCommentTagArray) && isset($returnCommentTagArray[0])) {
                     $returnComment = str_replace('@return ', '', $returnCommentTagArray[0]->render());
+                    // Normalize generic type spacing: phpDocumentor may add spaces after
+                    // commas in generic types (e.g. "array<string, string>"), strip them
+                    // for consistent output across phpDocumentor versions.
+                    $returnComment = self::normalizeGenericTypeSpacing($returnComment);
                 }
                 $paramArray = $docBlock->getTagsByName('param');
                 $parameterResolved = $this->enrichParametersResolvedWithDocComment($paramArray, $parameterResolved);
@@ -319,13 +323,45 @@ class MethodFactory
 
         $returnComment = trim($returnComment);
         if ($returnComment !== '') {
-            $parts = explode(' ', $returnComment, 2);
+            [$typePart, $descriptionPart] = $this->splitTypeAndDescription($returnComment);
             $returnComment = '';
-            $returnType = new Type($parts[0]);
-            if (isset($parts[1])) {
-                $returnComment = ucfirst(trim($parts[1]));
+            $returnType = new Type($typePart);
+            if ($descriptionPart !== '') {
+                $returnComment = ucfirst(trim($descriptionPart));
             }
         }
         return [$returnType, $returnComment];
+    }
+
+    /**
+     * Split a return comment into type and description, respecting angle brackets
+     * in generic types like array<string, string|array>.
+     */
+    private function splitTypeAndDescription(string $comment): array
+    {
+        $depth = 0;
+        $len = strlen($comment);
+        for ($i = 0; $i < $len; $i++) {
+            $char = $comment[$i];
+            if ($char === '<') {
+                $depth++;
+            } elseif ($char === '>') {
+                $depth--;
+            } elseif ($char === ' ' && $depth === 0) {
+                return [substr($comment, 0, $i), substr($comment, $i + 1)];
+            }
+        }
+        return [$comment, ''];
+    }
+
+    /**
+     * Remove spaces after commas inside angle brackets to normalize
+     * generic type strings across phpDocumentor versions.
+     */
+    private static function normalizeGenericTypeSpacing(string $type): string
+    {
+        return preg_replace_callback('/<[^>]+>/', static function (array $match): string {
+            return str_replace(', ', ',', $match[0]);
+        }, $type);
     }
 }
