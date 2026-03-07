@@ -40,7 +40,7 @@ abstract class ExtensionTestCase extends FunctionalTestCase
         $this->testExtensionsToLoad = [
             ...array_values($this->testExtensionsToLoad),
             't3docs/codesnippet',
-            'typo3conf/ext/codesnippet/Functional/Fixtures/Extensions/example_extension',
+            'typo3tests/example-extension',
         ];
     }
 }
