@@ -21,3 +21,10 @@ parameters:
     - '*/Build/node_modules'
     - '*/ext_emconf.php'
 
+  ignoreErrors:
+    # PHPUnit 11 removed static access to assertion methods, but CGL enforces self:: style.
+    # Both self:: and $this-> work at runtime; suppress the PHPStan false positive.
+    -
+      message: '#Call to an undefined static method .+::(assert|fail|mark)#'
+      reportUnmatched: false
+
