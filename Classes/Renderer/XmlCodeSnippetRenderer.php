@@ -52,21 +52,14 @@ class XmlCodeSnippetRenderer implements RendererInterface
      */
     public function render(array $config): string
     {
-        $relativeSourcePath = FileHelper::getRelativeSourcePath($sourceFile);
+        $relativeSourcePath = FileHelper::getRelativeSourcePath($config['sourceFile']);
         $absoluteSourcePath = FileHelper::getAbsoluteTypo3Path($relativeSourcePath);
 
-        $code = $this->readXml($absoluteSourcePath, $nodes);
+        $code = $this->readXml($absoluteSourcePath, $config['nodes'] ?? []);
 
-        $config = [
-            'sourceHint' => $relativeSourcePath,
-            'code' => $code,
-            'language' => 'xml',
-            'caption' => $caption,
-            'name' => $name,
-            'showLineNumbers' => $showLineNumbers,
-            'lineStartNumber' => $lineStartNumber,
-            'emphasizeLines' => $emphasizeLines,
-        ];
+        $config['sourceHint'] = $relativeSourcePath;
+        $config['code'] = $code;
+        $config['language'] = 'xml';
 
         return $this->getCodeBlockRst($config);
     }
