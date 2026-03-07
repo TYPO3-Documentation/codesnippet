@@ -348,14 +348,12 @@ case ${TEST_SUITE} in
         if [ "${TYPO3_VERSION}" == "12.4" ]; then
             COMMAND=(composer req typo3/cms-core:~12.4@dev -W --no-update --no-ansi --no-interaction --no-progress)
             ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-prepare-${SUFFIX} -e COMPOSER_CACHE_DIR=.Build/.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
-        fi
-        if [ "${TYPO3_VERSION}" == "13.4" ]; then
+        elif [ "${TYPO3_VERSION}" == "13.4" ]; then
             COMMAND=(composer req --dev --no-update typo3/cms-backend:~13.4@dev typo3/cms-recordlist:~13.4@dev typo3/cms-frontend:~13.4@dev typo3/cms-extbase:~13.4@dev typo3/cms-fluid:~13.4@dev typo3/cms-install:~13.4@dev --no-update --no-ansi --no-interaction --no-progress)
             ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-prepare-dev-${SUFFIX} -e COMPOSER_CACHE_DIR=.Build/.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
             COMMAND=(composer req typo3/cms-core:~13.4@dev -W --no-update --no-ansi --no-interaction --no-progress)
             ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-prepare-${SUFFIX} -e COMPOSER_CACHE_DIR=.Build/.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
-        fi
-        if [ "${TYPO3_VERSION}" == "main" ]; then
+        elif [ "${TYPO3_VERSION}" == "main" ]; then
             COMMAND=(composer req --dev --no-update typo3/cms-backend:dev-main typo3/cms-recordlist:dev-main typo3/cms-frontend:dev-main typo3/cms-extbase:dev-main typo3/cms-fluid:dev-main typo3/cms-install:dev-main --no-update --no-ansi --no-interaction --no-progress)
             ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-prepare-dev-${SUFFIX} -e COMPOSER_CACHE_DIR=.Build/.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
             COMMAND=(composer req typo3/cms-core:dev-main -W --no-update --no-ansi --no-interaction --no-progress)
