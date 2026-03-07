@@ -26,7 +26,7 @@ use T3docs\Codesnippet\Renderer\PhpDomainRenderer;
 class BaselineCommand extends Command
 {
     public function __construct(
-        readonly protected PhpDomainRenderer $phpDomainRenderer,
+        protected readonly PhpDomainRenderer $phpDomainRenderer,
         ?string $name = null,
     ) {
         parent::__construct($name);

@@ -83,8 +83,8 @@ class CodeSnippetRenderer implements RendererInterface
             'php' => 'php',
             default => throw new \Exception(
                 sprintf(
-                    'The programming language of the file "%s" cannot be determined automatically via the ' .
-                    'file extension "%s". Please specify the language explicitly.',
+                    'The programming language of the file "%s" cannot be determined automatically via the '
+                    . 'file extension "%s". Please specify the language explicitly.',
                     $filePath,
                     $fileExtension,
                 ),

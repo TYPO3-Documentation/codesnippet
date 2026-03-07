@@ -47,9 +47,9 @@ trait GetCodeBlockRstTrait
         }
         if (count($options) > 0) {
             $options = StringHelper::indentMultilineText(implode(
-                    "\n",
-                    $options,
-                ), '    ') . "\n";
+                "\n",
+                $options,
+            ), '    ') . "\n";
         } else {
             $options = '';
         }

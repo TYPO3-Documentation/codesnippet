@@ -62,7 +62,7 @@ class CodeSnippetCreator
 
                 static::writeFile(
                     $entry,
-                    $codeSnippetRenderer->render($entry)
+                    $codeSnippetRenderer->render($entry),
                 );
             }
         }

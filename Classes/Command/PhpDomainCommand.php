@@ -32,7 +32,7 @@ use T3docs\Codesnippet\Util\CodeSnippetCreator;
 class PhpDomainCommand extends Command
 {
     public function __construct(
-        readonly protected CodeSnippetCreator $codeSnippetCreator,
+        protected readonly CodeSnippetCreator $codeSnippetCreator,
         ?string $name = null,
     ) {
         parent::__construct($name);
@@ -62,7 +62,7 @@ class PhpDomainCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        $pathToConfigFile = $this->getPathToConfigFile((string)$input->getArgument('config'));
+        $pathToConfigFile = $this->getPathToConfigFile((string) $input->getArgument('config'));
         $creatorConfiguration = $this->getCreatorConfiguration(
             $pathToConfigFile,
             $io,

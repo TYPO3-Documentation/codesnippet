@@ -47,7 +47,7 @@ class MethodFactory
         bool $allowInternal,
         bool $allowDeprecated,
         bool $includeConstructor,
-    ): MethodMember|null {
+    ): ?MethodMember {
         $methodReflection = $reflectionClass->getMethod($method);
         $isInternal = $this->isInternal($methodReflection);
         if (
@@ -145,7 +145,7 @@ class MethodFactory
         try {
             $reflectionClass = new \ReflectionClass($className);
             $className = '\\' . $reflectionClass->getName();
-        } catch (\Exception | \Throwable) {
+        } catch (\Exception|\Throwable) {
             // It's a scalar type, array or non-object
         }
 
