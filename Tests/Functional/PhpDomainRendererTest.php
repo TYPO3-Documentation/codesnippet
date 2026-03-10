@@ -17,7 +17,6 @@ namespace T3docs\Codesnippet\Tests\Functional;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use T3docs\Codesnippet\Renderer\PhpDomainRenderer;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 class PhpDomainRendererTest extends ExtensionTestCase
 {
@@ -25,7 +24,7 @@ class PhpDomainRendererTest extends ExtensionTestCase
     public function setUp(): void
     {
         parent::setUp();
-        $this->phpDomainRendererTest = GeneralUtility::makeInstance(PhpDomainRenderer::class);
+        $this->phpDomainRendererTest = $this->get(PhpDomainRenderer::class);
     }
 
     #[DataProvider('extractClassProvider')]

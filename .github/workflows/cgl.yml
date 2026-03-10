@@ -2,6 +2,8 @@ name: code-quality
 
 on:
   push:
+    branches:
+      - main
   pull_request:
   schedule:
     - cron:  '56 4 * * *'
@@ -16,6 +18,8 @@ jobs:
           - '8.1'
           - '8.2'
           - '8.3'
+          - '8.4'
+          - '8.5'
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -29,26 +33,29 @@ jobs:
     strategy:
       matrix:
         include:
-          # Testing with PHP 7.4 and PHP8.0 is not done by intention. The codesnippet package needs to
-          # handle PHP code and features only available in PHP8.1, thus this is the minimum version we
-          # can test.
           - php: '8.1'
             core: '12.4'
           - php: '8.2'
             core: '12.4'
           - php: '8.3'
             core: '12.4'
+          - php: '8.4'
+            core: '12.4'
           - php: '8.2'
-            core: '13.0'
+            core: '13.4'
           - php: '8.3'
-            core: '13.0'
-          - php: '8.2'
-            core: '13.1'
-          - php: '8.3'
-            core: '13.1'
+            core: '13.4'
+          - php: '8.4'
+            core: '13.4'
+          - php: '8.5'
+            core: '13.4'
           - php: '8.2'
             core: 'main'
           - php: '8.3'
+            core: 'main'
+          - php: '8.4'
+            core: 'main'
+          - php: '8.5'
             core: 'main'
     steps:
       - name: Checkout
@@ -68,13 +75,3 @@ jobs:
 
       - name: phpstan
         run: Build/Scripts/runTests.sh -p ${{ matrix.php }} -s phpstan
-
-  xliff-lint:
-    name: "XLIFF linter"
-    runs-on: ubuntu-latest
-    steps:
-      - name: "Checkout"
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-
-      - name: "XLIFF lint"
-        uses: TYPO3-Continuous-Integration/TYPO3-CI-Xliff-Lint@ea1db1c5aeafbbc3c092ece90e5ecedf1f09ded9

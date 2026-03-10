@@ -109,18 +109,19 @@ Options:
             - 15    maintained until 2027-11-11
             - 16    maintained until 2028-11-09
 
-    -p <8.1|8.2|8.3>
+    -p <8.1|8.2|8.3|8.4|8.5>
         Specifies the PHP minor version to be used
-            - 8.1: (default) use PHP 8.1
-            - 8.2: use PHP 8.2
+            - 8.1: use PHP 8.1
+            - 8.2: (default) use PHP 8.2
             - 8.3: use PHP 8.3
+            - 8.4: use PHP 8.4
+            - 8.5: use PHP 8.5
 
-    -t <12.4|13.0|13.1|main>
+    -t <12.4|13.4|main>
         Only with -s composerUpdate
         Specifies the TYPO3 core major version to be used
             - 12.4 (default): use TYPO3 core v12
-            - 13.0: use TYPO3 core v13.0
-            - 13.1: use TYPO3 core v13.1
+            - 13.4: use TYPO3 core v13.4
             - main: use TYPO3 core main
     -n
         Only with -s cgl, composerNormalize, rector
@@ -186,13 +187,13 @@ while getopts "b:s:p:t:xy:nhu" OPT; do
             ;;
         p)
             PHP_VERSION=${OPTARG}
-            if ! [[ ${PHP_VERSION} =~ ^(8.1|8.2|8.3)$ ]]; then
+            if ! [[ ${PHP_VERSION} =~ ^(8.1|8.2|8.3|8.4|8.5)$ ]]; then
                 INVALID_OPTIONS+=("p ${OPTARG}")
             fi
             ;;
         t)
             TYPO3_VERSION=${OPTARG}
-            if ! [[ ${TYPO3_VERSION} =~ ^(12.4|13.0|13.1|main)$ ]]; then
+            if ! [[ ${TYPO3_VERSION} =~ ^(12.4|13.4|main)$ ]]; then
                 INVALID_OPTIONS+=("t ${OPTARG}")
             fi
             ;;
@@ -347,20 +348,12 @@ case ${TEST_SUITE} in
         if [ "${TYPO3_VERSION}" == "12.4" ]; then
             COMMAND=(composer req typo3/cms-core:~12.4@dev -W --no-update --no-ansi --no-interaction --no-progress)
             ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-prepare-${SUFFIX} -e COMPOSER_CACHE_DIR=.Build/.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
-        fi
-        if [ "${TYPO3_VERSION}" == "13.0" ]; then
-            COMMAND=(composer req --dev --no-update typo3/cms-backend:~13.0.1@dev typo3/cms-recordlist:~13.0.1@dev typo3/cms-frontend:~13.0.1@dev typo3/cms-extbase:~13.0.1@dev typo3/cms-fluid:~13.0.1@dev typo3/cms-install:~13.0.1@dev --no-update --no-ansi --no-interaction --no-progress)
+        elif [ "${TYPO3_VERSION}" == "13.4" ]; then
+            COMMAND=(composer req --dev --no-update typo3/cms-backend:~13.4@dev typo3/cms-recordlist:~13.4@dev typo3/cms-frontend:~13.4@dev typo3/cms-extbase:~13.4@dev typo3/cms-fluid:~13.4@dev typo3/cms-install:~13.4@dev --no-update --no-ansi --no-interaction --no-progress)
             ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-prepare-dev-${SUFFIX} -e COMPOSER_CACHE_DIR=.Build/.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
-            COMMAND=(composer req typo3/cms-core:~13.0.1@dev -W --no-update --no-ansi --no-interaction --no-progress)
+            COMMAND=(composer req typo3/cms-core:~13.4@dev -W --no-update --no-ansi --no-interaction --no-progress)
             ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-prepare-${SUFFIX} -e COMPOSER_CACHE_DIR=.Build/.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
-        fi
-        if [ "${TYPO3_VERSION}" == "13.1" ]; then
-            COMMAND=(composer req --dev --no-update typo3/cms-backend:~13.1@dev typo3/cms-recordlist:~13.1@dev typo3/cms-frontend:~13.1@dev typo3/cms-extbase:~13.1@dev typo3/cms-fluid:~13.1@dev typo3/cms-install:~13.1@dev --no-update --no-ansi --no-interaction --no-progress)
-            ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-prepare-dev-${SUFFIX} -e COMPOSER_CACHE_DIR=.Build/.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
-            COMMAND=(composer req typo3/cms-core:~13.1@dev -W --no-update --no-ansi --no-interaction --no-progress)
-            ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-prepare-${SUFFIX} -e COMPOSER_CACHE_DIR=.Build/.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
-        fi
-        if [ "${TYPO3_VERSION}" == "main" ]; then
+        elif [ "${TYPO3_VERSION}" == "main" ]; then
             COMMAND=(composer req --dev --no-update typo3/cms-backend:dev-main typo3/cms-recordlist:dev-main typo3/cms-frontend:dev-main typo3/cms-extbase:dev-main typo3/cms-fluid:dev-main typo3/cms-install:dev-main --no-update --no-ansi --no-interaction --no-progress)
             ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-prepare-dev-${SUFFIX} -e COMPOSER_CACHE_DIR=.Build/.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
             COMMAND=(composer req typo3/cms-core:dev-main -W --no-update --no-ansi --no-interaction --no-progress)

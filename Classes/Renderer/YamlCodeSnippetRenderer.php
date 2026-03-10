@@ -55,23 +55,14 @@ class YamlCodeSnippetRenderer implements RendererInterface
      */
     public function render(array $config): string
     {
-        $relativeTargetPath = FileHelper::getRelativeTargetPath($targetFileName);
-        $absoluteTargetPath = FileHelper::getAbsoluteDocumentationPath($relativeTargetPath);
-        $relativeSourcePath = FileHelper::getRelativeSourcePath($sourceFile);
+        $relativeSourcePath = FileHelper::getRelativeSourcePath($config['sourceFile']);
         $absoluteSourcePath = FileHelper::getAbsoluteTypo3Path($relativeSourcePath);
 
-        $code = $this->readYaml($absoluteSourcePath, $fields, $inlineLevel);
+        $code = $this->readYaml($absoluteSourcePath, $config['fields'] ?? [], $config['inlineLevel'] ?? 10);
 
-        $config = [
-            'sourceHint' => $relativeSourcePath,
-            'code' => $code,
-            'language' => 'yaml',
-            'caption' => $caption,
-            'name' => $name,
-            'showLineNumbers' => $showLineNumbers,
-            'lineStartNumber' => $lineStartNumber,
-            'emphasizeLines' => $emphasizeLines,
-        ];
+        $config['sourceHint'] = $relativeSourcePath;
+        $config['code'] = $code;
+        $config['language'] = 'yaml';
 
         return $this->getCodeBlockRst($config);
     }

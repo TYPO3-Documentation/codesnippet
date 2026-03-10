@@ -39,7 +39,7 @@ class MemberFactory
         \ReflectionClass $classReflection,
         string $constant,
         int $modifierSumAllowed,
-    ): ConstantMember|null {
+    ): ?ConstantMember {
         $constantReflection = new \ReflectionClassConstant($classReflection->getName(), $constant);
         $constantValue = $constantReflection->getValue();
 

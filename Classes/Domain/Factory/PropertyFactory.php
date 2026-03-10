@@ -39,7 +39,7 @@ class PropertyFactory
         \ReflectionClass $classReflection,
         string $property,
         int $modifierSum,
-    ): PropertyMember|null {
+    ): ?PropertyMember {
         $propertyReflection = $classReflection->getProperty($property);
         if (!$classReflection->getFileName()) {
             return null;

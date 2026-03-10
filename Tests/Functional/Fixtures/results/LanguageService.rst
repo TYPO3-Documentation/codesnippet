@@ -1,6 +1,6 @@
-..  php:namespace::  TYPO3\CMS\Core\Localization
+..  php:namespace::  TYPO3Tests\ExampleExtension
 
-..  php:class:: LanguageService
+..  php:class:: PropertyExample
 
     ..  php:attr:: lang
         :public:

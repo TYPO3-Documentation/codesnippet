@@ -28,7 +28,7 @@
 		"ergebnis/composer-normalize": "^2.42",
 		"phpstan/phpstan": "^1.10",
 		"typo3/coding-standards": "dev-main",
-		"typo3/testing-framework": "^8.0.9",
+		"typo3/testing-framework": "^8.0.9 || ^9.0",
 		"typo3tests/example-extension": "@dev"
 	},
 	"autoload": {
