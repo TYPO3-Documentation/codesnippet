@@ -359,11 +359,16 @@ case ${TEST_SUITE} in
             ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-prepare-dev-${SUFFIX} -e COMPOSER_CACHE_DIR=.Build/.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
             COMMAND=(composer req typo3/cms-core:~14.3@dev -W --no-update --no-ansi --no-interaction --no-progress)
             ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-prepare-${SUFFIX} -e COMPOSER_CACHE_DIR=.Build/.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
+            # Remove due to being deprecated in v14
+            rm ./Tests/Functional/Fixtures/Extensions/example_extension/ext_emconf.php
         elif [ "${TYPO3_VERSION}" == "main" ]; then
             COMMAND=(composer req --dev --no-update typo3/cms-backend:dev-main typo3/cms-recordlist:dev-main typo3/cms-frontend:dev-main typo3/cms-extbase:dev-main typo3/cms-fluid:dev-main typo3/cms-install:dev-main --no-update --no-ansi --no-interaction --no-progress)
             ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-prepare-dev-${SUFFIX} -e COMPOSER_CACHE_DIR=.Build/.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
             COMMAND=(composer req typo3/cms-core:dev-main -W --no-update --no-ansi --no-interaction --no-progress)
             ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-prepare-${SUFFIX} -e COMPOSER_CACHE_DIR=.Build/.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
+            # Remove due to being unneeded in v15
+            # @todo - needs a better hack to have this file locally
+            rm ./Tests/Functional/Fixtures/Extensions/example_extension/ext_emconf.php
         fi
         COMMAND=(composer update --no-ansi --no-interaction --no-progress)
         ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-install-${SUFFIX} -e COMPOSER_CACHE_DIR=.Build/.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
