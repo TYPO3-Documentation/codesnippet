@@ -1,4 +1,4 @@
-name: tests main (v15)
+name: tests 14.3
 
 on:
   push:
@@ -24,10 +24,10 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       - name: Install testing system
-        run: Build/Scripts/runTests.sh -t main -p ${{ matrix.php }} -s composerUpdate
+        run: Build/Scripts/runTests.sh -t 14.3 -p ${{ matrix.php }} -s composerUpdate
 
       - name: Unit Tests
-        run: Build/Scripts/runTests.sh -t main -p ${{ matrix.php }} -s unit
+        run: Build/Scripts/runTests.sh -t 14.3 -p ${{ matrix.php }} -s unit
 
       - name: Functional Tests
-        run: Build/Scripts/runTests.sh -t main -p ${{ matrix.php }} -s functional
+        run: Build/Scripts/runTests.sh -t 14.3 -p ${{ matrix.php }} -s functional
