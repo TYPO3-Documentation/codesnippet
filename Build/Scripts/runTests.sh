@@ -348,7 +348,7 @@ case ${TEST_SUITE} in
         fi
 
         # Prepare deprecated ext_emconf.php for TYPO3 < v14
-        if [ -f ext_emconf.legacy ]; then
+        if [ -f "${ROOT_DIR}/ext_emconf.legacy" ]; then
             cp ./Tests/Functional/Fixtures/Extensions/example_extension/ext_emconf.legacy ./Tests/Functional/Fixtures/Extensions/example_extension/ext_emconf.php
             cp ext_emconf.legacy ext_emconf.php
         fi
@@ -367,7 +367,7 @@ case ${TEST_SUITE} in
             COMMAND=(composer req typo3/cms-core:~14.3@dev -W --no-update --no-ansi --no-interaction --no-progress)
             ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-prepare-${SUFFIX} -e COMPOSER_CACHE_DIR=.Build/.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
             # Remove due to being deprecated in v14
-            if [ -f ext_emconf.php ]; then
+            if [ -f "${ROOT_DIR}/ext_emconf.php" ]; then
                 mv ./Tests/Functional/Fixtures/Extensions/example_extension/ext_emconf.php ./Tests/Functional/Fixtures/Extensions/example_extension/ext_emconf.legacy
                 mv ext_emconf.php ext_emconf.legacy
             fi
@@ -377,7 +377,7 @@ case ${TEST_SUITE} in
             COMMAND=(composer req typo3/cms-core:dev-main -W --no-update --no-ansi --no-interaction --no-progress)
             ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-prepare-${SUFFIX} -e COMPOSER_CACHE_DIR=.Build/.cache/composer -e COMPOSER_ROOT_VERSION=${COMPOSER_ROOT_VERSION} ${IMAGE_PHP} "${COMMAND[@]}"
             # Remove due to being unneeded in v15
-            if [ -f ext_emconf.php ]; then
+            if [ -f "${ROOT_DIR}/ext_emconf.php" ]; then
                 mv ./Tests/Functional/Fixtures/Extensions/example_extension/ext_emconf.php ./Tests/Functional/Fixtures/Extensions/example_extension/ext_emconf.legacy
                 mv ext_emconf.php ext_emconf.legacy
             fi
