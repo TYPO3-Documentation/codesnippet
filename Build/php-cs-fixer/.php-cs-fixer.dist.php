@@ -22,7 +22,8 @@ $config
     ->in(__DIR__)
     ->exclude([
         __DIR__ . '/.Build',
-        __DIR__ . '/.ddev'
+        __DIR__ . '/.ddev',
+        __DIR__ . '/var',
     ])
 ;
 
